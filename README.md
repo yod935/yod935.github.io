@@ -1,6 +1,42 @@
-# Product Catalog
+# YOD Product Catalog
 
-前端产品目录网页，适用于 GitHub Pages 部署。
+> One-Stop Supplier For HVAC & Plumbing Service Contractors
+
+---
+
+## Version History
+
+### v1.4 — 2026-06-27
+- Hero 标题更新为 "One-Stop Supplier For HVAC & Plumbing Service Contractors"
+- Hero 统计：14 Yrs · Rapid R&D（3-Day Drawings, 7-Day Samples）
+- About 年份更新为 Since 2012 / 14 Years Experience
+- 联系方式更新：WhatsApp +86 136-5678-9307 · sales@yodcompany.com
+- 密码面板重设计：SVG 图标 + 多层阴影 + 克制风格
+- 安全检测动画改为 Dashboard 手动触发
+- start.bat 加入端口占用自动清理
+
+### v1.3 — 2026-06-26
+- Export Full Catalog 功能（导出合并后的完整产品 JSON）
+- GitHub Publish 面板（通过 API 直接写回仓库）
+- 操作日志系统（Activity Log，最多 500 条）
+- 密码 SHA-256 哈希存储，Web Crypto API 异步验证
+- 新建产品功能（Custom Products 带黄色标签）
+
+### v1.2 — 2026-06-25
+- 管理员面板：Dashboard 统计 / Product Manager CRUD / 显示隐藏切换
+- 首页跳转逻辑修复、搜索框失焦修复、按钮样式修复
+- 进入管理员系统入口：页面底部「·」→ 密码验证
+
+### v1.1 — 2026-06-24
+- 优化构建脚本，按分类规模排序，全局唯一序号 0001-1795
+- 分离卖家版 / 买家版目录
+
+### v1.0 — 2026-06-23
+- 初始发布：1,892 个源 Excel → 预编译为 JSON + 图片
+- 8 大分类 · 40,000+ 产品 · 41,229 张图片
+- 纯静态前端：分类树浏览、实时搜索、响应式设计
+
+---
 
 ## 项目结构
 
