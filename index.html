@@ -20,6 +20,7 @@
     TREE_DATA = results[0];
     SEARCH_DATA = results[1];
     EMBEDDED_DATA = results[2];
+    buildDisplayCategories();
     initApp();
   }).catch(function(err){
     console.error('Data load error:', err);
@@ -94,7 +95,10 @@ body {
 .company-name {
   font-size: 15px; font-weight: 800; color: var(--text-heading); letter-spacing: -0.3px;
   line-height: 1.2; transition: color 0.2s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 280px;
 }
+.company-name .mobile-short { display: none; }
 .company-tagline {
   font-size: 11.5px; color: var(--text-muted); font-weight: 500; margin-top: 2px;
   letter-spacing: 0.2px;
@@ -301,7 +305,6 @@ body {
   letter-spacing: 0.3px; text-transform: uppercase;
 }
 .hlabel-num {
-  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Menlo', Monaco, monospace;
   font-weight: 700; font-size: 13px;
 }
 .hero-divider {
@@ -322,42 +325,108 @@ body {
   margin-bottom: 12px; text-align: center;
 }
 .section-heading {
-  font-size: 36px; font-weight: 900; color: var(--text-heading);
-  text-align: center; letter-spacing: -1px; margin-bottom: 12px;
+  font-size: 40px; font-weight: 900; color: var(--text-heading);
+  text-align: center; letter-spacing: -1.2px; margin-bottom: 14px;
+  position: relative;
+}
+.section-heading .accent { color: var(--brand-blue); position: relative; }
+/* Decorative underline below heading */
+.section-heading::after {
+  content: ''; display: block; width: 72px; height: 4px;
+  margin: 18px auto 0;
+  background: linear-gradient(90deg, var(--brand-blue), var(--brand-blue-light));
+  border-radius: 3px;
+  opacity: 0.8;
 }
 .section-sub {
   text-align: center; color: var(--text-muted); font-size: 16px; line-height: 1.7;
   max-width: 560px; margin: 0 auto 56px;
 }
+/* ─── Sequential glow for feat cards (JS-driven) ─── */
 .features-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
 }
 .feat-card {
-  background: var(--bg-page); border-radius: var(--radius-md);
-  padding: 28px 26px 30px; border: 1px solid var(--border-light);
-  transition: all 0.25s; position: relative; overflow: hidden;
+  background: #fff; border-radius: 18px;
+  padding: 32px 28px 28px; border: 1.5px solid var(--border-light);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 0 0 0 rgba(29,63,165,0);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 0;
 }
+/* Subtle card-top gradient accent (always visible, low opacity) */
 .feat-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--brand-blue), var(--brand-blue-light));
-  opacity: 0; transition: opacity 0.25s;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--brand-blue), #5b8af7, var(--brand-blue-light));
+  opacity: 0; transition: opacity 0.35s ease;
+  z-index: 1;
 }
-.feat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: #c7d6ff; background: #fff; }
+.feat-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: 18px;
+  background: radial-gradient(600px circle at var(--mx,50%) var(--my,50%), rgba(29,63,165,0.06), transparent 60%);
+  opacity: 0; transition: opacity 0.5s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+.feat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 36px rgba(29,63,165,0.14), 0 4px 16px rgba(0,0,0,0.06);
+  border-color: #c4d3ff;
+}
 .feat-card:hover::before { opacity: 1; }
-.feat-icon {
-  width: 52px; height: 52px; border-radius: 14px;
-  background: #f0f4ff;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px; margin-bottom: 18px;
+.feat-card:hover::after { opacity: 1; }
+
+/* JS glow state */
+.feat-card.glow {
+  box-shadow: 0 0 0 3px rgba(29,63,165,0.25), 0 14px 38px rgba(29,63,165,0.22) !important;
+  border-color: var(--brand-blue) !important;
+  background: #fafbff !important;
+  transform: translateY(-6px) !important;
 }
-.feat-icon svg { width: 26px; height: 26px; }
-.feat-title { font-size: 16px; font-weight: 800; color: var(--text-heading); margin-bottom: 8px; }
-.feat-desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.65; }
+.feat-card.glow::before { opacity: 1 !important; }
+.feat-card:hover { animation: none !important; }
+
+.feat-icon {
+  width: 60px; height: 60px; border-radius: 16px;
+  background: linear-gradient(135deg, #eef3ff 0%, #dce6ff 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 20px; position: relative; z-index: 1;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 12px rgba(29,63,165,0.08);
+}
+.feat-card:hover .feat-icon {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(29,63,165,0.16);
+  background: linear-gradient(135deg, #dce6ff 0%, #c8d8ff 100%);
+}
+.feat-icon svg { width: 28px; height: 28px; position: relative; z-index: 1; }
+.feat-title {
+  font-size: 17px; font-weight: 800; color: var(--text-heading);
+  margin-bottom: 10px; position: relative; z-index: 1;
+}
+.feat-desc {
+  font-size: 13.5px; color: var(--text-muted); line-height: 1.7;
+  flex: 1; position: relative; z-index: 1;
+}
 .feat-metric {
-  display: inline-block; margin-top: 14px;
-  font-size: 12px; font-weight: 800; color: var(--brand-blue);
-  background: #eff3ff; padding: 4px 12px; border-radius: 100px;
-  letter-spacing: 0.2px;
+  display: block; text-align: center; margin-top: 18px;
+  font-size: 11px; font-weight: 700; color: var(--brand-blue);
+  background: linear-gradient(135deg, #eff3ff 0%, #e3ebff 100%);
+  padding: 5px 10px; border-radius: 100px;
+  letter-spacing: 0.1px; white-space: nowrap;
+  border: 1px solid rgba(29,63,165,0.10);
+  position: relative; z-index: 1;
+  transition: all 0.35s ease;
+  max-width: 100%; overflow: hidden;
+  box-sizing: border-box;
+}
+.feat-card:hover .feat-metric {
+  background: linear-gradient(135deg, #1d3fa5 0%, #2a5ae0 100%);
+  color: #fff; border-color: transparent;
+}
+.feat-num {
+  font-weight: 800; letter-spacing: 0.02em; font-size: 12.5px;
 }
 
 /* ===== CATEGORY SECTION ===== */
@@ -396,11 +465,13 @@ body {
 .cat-card-img.placeholder {
   display: flex; align-items: center; justify-content: center;
   font-size: 48px; color: #a3bffa; background: linear-gradient(135deg, #f8fafc 0%, #edf2ff 100%);
+  position: relative; overflow: hidden;
 }
 .cat-card-body { padding: 20px 22px 22px; }
 .cat-card-name {
   font-size: 15px; font-weight: 800; color: var(--text-heading); line-height: 1.3;
   margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  min-height: 39px; /* 2 lines × 15px × 1.3 — keeps cards uniform */
 }
 .cat-card-meta {
   display: flex; align-items: center; justify-content: space-between;
@@ -437,60 +508,149 @@ body {
 }
 
 /* ===== PRODUCT TABLE ===== */
+/* ===== PRODUCT TABLE (Premium Card Style) ===== */
 .product-table-wrap {
-  background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden;
-  box-shadow: var(--shadow-md); margin-bottom: 20px;
-  border: 1px solid var(--border-light);
+  background: #fff; border-radius: var(--radius-xl); overflow: hidden;
+  box-shadow: 0 2px 4px rgba(12,20,69,0.04), 0 8px 24px rgba(12,20,69,0.06), 0 16px 48px rgba(12,20,69,0.03);
+  margin-bottom: 32px; border: 1px solid rgba(226,232,240,0.7);
+  position: relative;
+}
+.product-table-wrap::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: linear-gradient(90deg, var(--brand-blue), #60a5fa, var(--brand-blue));
+  opacity: 0.7;
 }
 .product-table-header {
-  padding: 20px 28px; border-bottom: 1px solid var(--border-light);
+  padding: 22px 28px 20px;
   display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
-  background: linear-gradient(135deg, #fafbff 0%, #f3f6ff 100%);
+  background: linear-gradient(135deg, #f8faff 0%, #eef2ff 50%, #f5f7ff 100%);
+  border-bottom: none; position: relative;
 }
-.product-table-title { font-size: 19px; font-weight: 900; color: var(--text-heading); }
+.product-table-title { font-size: 21px; font-weight: 900; color: var(--text-heading); letter-spacing: -0.3px; }
 .product-table-pill {
-  display: inline-block; font-size: 11.5px; font-weight: 700;
-  color: var(--brand-blue); background: #eff3ff;
-  padding: 2px 10px; border-radius: 100px; vertical-align: middle;
-  margin-left: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  display: inline-block; font-size: 11.5px; font-weight: 800;
+  color: var(--brand-blue); background: linear-gradient(135deg, #e8edfc, #dce5fa);
+  padding: 3px 12px; border-radius: 100px; vertical-align: middle;
+  margin-left: 10px; border: 1px solid rgba(29,63,165,0.10);
 }
-.product-table-meta { font-size: 12.5px; color: var(--text-muted); background: #eff3ff; padding: 4px 12px; border-radius: 100px; font-weight: 600; }
-.product-table { width: 100%; border-collapse: collapse; }
+.product-table-meta { font-size: 12px; color: rgba(29,63,165,0.75); background: rgba(239,243,255,0.8); padding: 5px 14px; border-radius: 100px; font-weight: 700; border: 1px solid rgba(29,63,165,0.08); }
+/* --- Source Trace & Mini Password --- */
+.src-trace { padding: 12px 20px; margin-bottom: 14px; background: rgba(29,63,165,0.04); border: 1px dashed rgba(29,63,165,0.18); border-radius: 10px; font-family: 'SF Mono','Cascadia Code','Consolas',monospace; font-size: 12px; color: rgba(12,20,69,0.65); word-break: break-all; display: none; }
+.src-trace strong { color: var(--text-heading); font-size: 12.5px; }
+.src-trace-actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.src-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; transition: all 0.2s; text-decoration: none; }
+.src-btn-seller { background: linear-gradient(135deg,#1d3fa5,#2952c8); color: #fff; box-shadow: 0 2px 8px rgba(29,63,165,0.2); }
+.src-btn-seller:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(29,63,165,0.3); }
+.src-btn-close { background: rgba(0,0,0,0.04); color: var(--text-muted); border-color: rgba(0,0,0,0.08); }
+.src-btn-close:hover { background: rgba(0,0,0,0.08); color: var(--text-heading); }
+/* Mini password overlay for source trace */
+.mini-pw-overlay { display: none; position: fixed; inset: 0; z-index: 2100; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(3px); }
+.mini-pw-overlay.show { display: flex; }
+.mini-pw-box { background: #fff; padding: 28px 32px 24px; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06); max-width: 360px; width: 90%; text-align: center; }
+.mini-pw-box h4 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: var(--text-heading); }
+.mini-pw-box p { margin: 0 0 18px; font-size: 12.5px; color: var(--text-muted); }
+.mini-pw-box input { width: 100%; height: 44px; padding: 0 16px; border: 1.5px solid #e2e6f0; border-radius: 10px; font-size: 14px; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
+.mini-pw-box input:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(29,63,165,0.06); }
+.mini-pw-error { color: #e53e3e; font-size: 12px; min-height: 18px; margin: 8px 0 4px; }
+.mini-pw-box .mini-pw-btns { display: flex; gap: 10px; margin-top: 12px; }
+.mini-pw-box .mini-btn { flex: 1; height: 40px; border-radius: 10px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.mini-btn-primary { background: var(--brand-blue); color: #fff; }
+.mini-btn-primary:hover { background: var(--brand-blue-light); }
+.mini-btn-ghost { background: #f3f4f6; color: var(--text-muted); }
+.mini-btn-ghost:hover { background: #e5e7eb; }
+/* Seller viewer modal */
+.seller-modal { display: none; position: fixed; inset: 0; z-index: 2200; }
+.seller-modal.show { display: flex; flex-direction: column; }
+.seller-modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); }
+.seller-modal-inner { position: relative; margin: 40px auto 0; width: 96%; max-width: 1200px; max-height: 88vh; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
+.seller-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #eef1f7; flex-shrink: 0; }
+.seller-modal-head h4 { margin: 0; font-size: 15px; font-weight: 800; color: var(--text-heading); }
+.seller-modal-head .sm-badge { font-size: 11px; background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #78350f; padding: 3px 10px; border-radius: 100px; font-weight: 800; margin-left: 10px; }
+.seller-modal-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: #f3f4f6; cursor: pointer; font-size: 18px; color: #6b7280; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.seller-modal-close:hover { background: #e5e7eb; color: #111; }
+.seller-modal-body { overflow: auto; flex: 1; padding: 16px 24px 24px; }
+.seller-modal-body .sm-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; color: var(--text-muted); gap: 16px; }
+.seller-modal-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.seller-modal-body th { background: #f8faff; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+.seller-modal-body td { padding: 9px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.seller-modal-body .num { font-family: 'SF Mono','Cascadia Code','Consolas',monospace; font-weight: 700; }
+.seller-modal-body tr:hover td { background: #fafbff; }
+.product-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.product-table thead tr {
+  background: linear-gradient(180deg, #f5f7fb 0%, #eef1f7 100%);
+}
 .product-table th {
-  background: #f8faff; padding: 13px 18px; text-align: left;
-  font-size: 11.5px; font-weight: 800; color: var(--text-muted);
-  letter-spacing: 0.5px; border-bottom: 2px solid var(--border);
-  white-space: nowrap; text-transform: uppercase;
+  padding: 15px 20px; text-align: left;
+  font-size: 11.5px; font-weight: 800; color: #5a6580;
+  letter-spacing: 0.7px; text-transform: uppercase;
+  white-space: nowrap; border-bottom: 1.5px solid #e2e6ef;
 }
 .product-table td {
-  padding: 12px 18px; border-bottom: 1px solid var(--border-light); font-size: 14px;
-  vertical-align: middle; color: var(--text-body); max-width: 400px;
-  overflow: hidden; text-overflow: ellipsis;
+  padding: 18px 20px; border-bottom: 1px solid #f0f2f7; font-size: 14.5px;
+  vertical-align: middle; color: var(--text-body);
+  transition: background 0.15s ease;
 }
-.product-table tr:hover td { background: #f9fbff; }
-.product-table .col-num { width: 50px; color: var(--text-light); font-weight: 700; text-align: center; font-size: 12.5px; }
-.product-table .col-img { width: 100px; text-align: center; }
-.product-table .col-img img { max-width: 86px; max-height: 64px; border-radius: 8px; border: 1px solid var(--border-light); object-fit: contain; background: #fafafa; }
-.product-table .col-action { width: 110px; text-align: center; }
+.product-table tbody tr {
+  transition: all 0.18s ease;
+}
+.product-table tbody tr:hover {
+  background: linear-gradient(90deg, rgba(96,165,250,0.04) 0%, transparent 50%);
+  transform: scale(1.002);
+  box-shadow: 0 1px 4px rgba(12,20,69,0.05);
+}
+.product-table tbody tr:hover td {
+  background: transparent;
+}
+.product-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.product-table .col-num { width: 56px; color: #94a3b8; font-weight: 800; text-align: center; font-size: 13px; }
+.product-table .col-img { width: 110px; text-align: center; }
+.product-table .col-img img {
+  max-width: 92px; max-height: 72px;
+  border-radius: 10px;
+  border: 1.5px solid #e8ecf2;
+  object-fit: contain; background: #fafbfc;
+  padding: 6px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.product-table .col-img img:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 12px rgba(12,20,69,0.12), 0 0 0 1px rgba(29,63,165,0.08);
+  cursor: zoom-in;
+}
+.product-table .col-action { width: 120px; text-align: center; white-space: nowrap; }
 .table-action-btn {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 14px; background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 8px; color: var(--brand-blue);
-  font-size: 12px; font-weight: 700; cursor: pointer;
-  text-decoration: none; transition: all 0.2s;
+  padding: 9px 18px; background: #fff;
+  border: 1.5px solid rgba(29,63,165,0.20);
+  border-radius: 10px; color: var(--brand-blue);
+  font-size: 12.5px; font-weight: 800; cursor: pointer;
+  text-decoration: none; transition: all 0.25s cubic-bezier(.4,0,.2,1);
   white-space: nowrap;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+  font-family: inherit; letter-spacing: 0.01em;
+  position: relative; overflow: hidden;
+}
+.table-action-btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at center, rgba(29,63,165,0.06) 0%, transparent 70%);
+  opacity: 0; transition: opacity 0.25s;
 }
 .table-action-btn:hover {
   background: var(--brand-blue); color: #fff;
   border-color: var(--brand-blue);
-  box-shadow: 0 2px 8px rgba(29,63,165,0.2);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(29,63,165,0.28), 0 0 0 1px rgba(29,63,165,0.1);
+  transform: translateY(-2px);
 }
+.table-action-btn:hover::before { opacity: 1; }
+.table-action-btn:active { transform: translateY(0); }
+
 .table-footer {
-  padding: 13px 28px; background: #f9fafb; border-top: 1px solid var(--border-light);
-  font-size: 12.5px; color: var(--text-muted); display: flex; justify-content: space-between;
+  padding: 14px 28px; background: linear-gradient(180deg, #f8f9fb 0%, #f2f4f8 100%);
+  border-top: 1px solid #eef0f5;
+  font-size: 12.5px; color: #8892a4; display: flex; justify-content: space-between;
+  font-weight: 600;
 }
 
 /* ===== SUBCATEGORY TITLE ===== */
@@ -523,114 +683,241 @@ body {
 /* ===== ABOUT SECTION ===== */
 .about-section {
   background: linear-gradient(180deg, #f7f8fc 0%, #eef2ff 100%);
-  border-top: 1px solid var(--border-light); padding: 80px 0 72px;
+  border-top: 1px solid var(--border-light);
+  padding: 88px 0 80px;
+  position: relative; overflow: hidden;
 }
-.about-inner { max-width: 1320px; margin: 0 auto; padding: 0 40px; }
+/* Subtle dot-pattern overlay */
+.about-section::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(29,63,165,0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none; z-index: 0;
+}
+.about-inner { max-width: 1320px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
 .about-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: stretch;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: start;
 }
 .about-left {
   display: flex; flex-direction: column;
-  min-height: 100%;
 }
 .about-right {
   display: flex; flex-direction: column;
 }
 .about-eyebrow {
   font-size: 11.5px; font-weight: 800; color: var(--brand-blue);
-  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px;
+  letter-spacing: 1.8px; text-transform: uppercase;
+  margin-bottom: 16px;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.about-eyebrow::after {
+  content: ''; width: 36px; height: 2px;
+  background: linear-gradient(90deg, var(--brand-blue), var(--brand-blue-light));
+  border-radius: 2px;
 }
 .about-title {
-  font-size: 38px; font-weight: 900; color: var(--text-heading); margin-bottom: 20px;
-  letter-spacing: -1.2px; line-height: 1.15;
+  font-size: 40px; font-weight: 900; color: var(--text-heading);
+  margin-bottom: 22px; letter-spacing: -1.4px; line-height: 1.12;
+  position: relative;
 }
-.about-title .accent { color: var(--brand-blue); }
+.about-title .accent {
+  color: var(--brand-blue);
+  position: relative; display: inline-block;
+}
+.about-title .accent::after {
+  content: ''; position: absolute; left: 0; bottom: 4px; width: 100%; height: 10px;
+  background: rgba(29,63,165,0.10); border-radius: 4px; z-index: -1;
+}
 .about-text {
-  font-size: 15px; color: var(--text-muted); line-height: 1.85; margin-bottom: 18px;
+  font-size: 15px; color: var(--text-muted); line-height: 1.9; margin-bottom: 20px;
+  position: relative; padding-left: 18px;
+  border-left: 3px solid var(--border-light);
+  transition: border-color 0.35s ease;
 }
+.about-left:hover .about-text { border-left-color: var(--brand-blue-light); }
 .about-tags {
-  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px;
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px;
 }
 .about-tag {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 7px;
   background: #fff; border: 1.5px solid var(--border);
-  padding: 7px 16px; border-radius: 100px;
+  padding: 8px 18px; border-radius: 100px;
   font-size: 13px; font-weight: 700; color: var(--text-body);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.about-tag .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand-blue); }
-.adv-cards { display: flex; flex-direction: column; gap: 16px; }
+.about-tag:hover {
+  border-color: var(--brand-blue);
+  box-shadow: 0 4px 14px rgba(29,63,165,0.10);
+  transform: translateY(-2px);
+}
+.about-tag .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-blue), #5b8af7);
+  box-shadow: 0 0 6px rgba(29,63,165,0.3);
+}
+.adv-cards { display: flex; flex-direction: column; gap: 18px; }
 .adv-card {
-  background: #fff; border-radius: var(--radius-md); padding: 22px 24px;
-  border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);
-  display: flex; gap: 18px; align-items: flex-start;
-  transition: all 0.2s;
+  background: #fff; border-radius: 16px; padding: 24px 28px;
+  border: 1.5px solid var(--border-light);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  display: flex; gap: 20px; align-items: flex-start;
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative; overflow: hidden;
 }
-.adv-card:hover { border-color: #c7d6ff; box-shadow: var(--shadow-md); transform: translateX(4px); }
+/* Left accent stripe */
+.adv-card::before {
+  content: ''; position: absolute; left: 0; top: 16px; bottom: 16px;
+  width: 4px; border-radius: 0 3px 3px 0;
+  background: var(--brand-blue);
+  opacity: 0; transition: opacity 0.35s ease, top 0.35s ease, bottom 0.35s ease;
+}
+.adv-card:hover {
+  border-color: #c7d6ff;
+  box-shadow: 0 10px 32px rgba(29,63,165,0.10), 0 4px 12px rgba(0,0,0,0.04);
+  transform: translateX(6px);
+}
+.adv-card:hover::before { opacity: 1; }
 .adv-icon-wrap {
-  width: 50px; height: 50px; border-radius: 13px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
 }
-.adv-icon-wrap svg { width: 24px; height: 24px; }
-.adv-icon-blue { background: #eef2ff; }
-.adv-icon-green { background: #ecfdf5; }
-.adv-icon-yellow { background: #fffbeb; }
-.adv-icon-purple { background: #f5f3ff; }
-.adv-content h4 { font-size: 15px; font-weight: 800; color: var(--text-heading); margin-bottom: 4px; }
-.adv-content p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.adv-card:hover .adv-icon-wrap {
+  transform: scale(1.10) rotate(-5deg);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+}
+.adv-icon-wrap svg { width: 26px; height: 26px; }
+.adv-icon-blue { background: linear-gradient(135deg, #e8eeff 0%, #d4e0ff 100%); }
+.adv-icon-green { background: linear-gradient(135deg, #e6f9f0 0%, #d0f4e2 100%); }
+.adv-icon-yellow { background: linear-gradient(135deg, #fffbe6 0%, #fff3c4 100%); }
+.adv-icon-purple { background: linear-gradient(135deg, #f3efff 0%, #e6dfff 100%); }
+.adv-content h4 {
+  font-size: 16px; font-weight: 800; color: var(--text-heading);
+  margin-bottom: 6px; line-height: 1.3;
+}
+.adv-content p {
+  font-size: 13.5px; color: var(--text-muted); line-height: 1.7;
+}
 
-/* ===== FULL-WIDTH CTA BANNER ===== */
+/* ===== PREMIUM CTA BANNER ===== */
 .contact-cta-banner {
-  background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-light) 100%);
-  border-radius: var(--radius-xl); padding: 32px 40px;
-  color: #fff; margin-top: 40px;
-  box-shadow: 0 20px 60px rgba(29,63,165,0.30);
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #0a1d6b 0%, #1530a5 30%, #1d3fa5 55%, #2860d0 100%);
+  border-radius: 20px; padding: 48px 48px;
+  color: #fff; margin-top: 48px;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.10) inset,
+    0 24px 80px rgba(15,35,120,0.35),
+    0 4px 16px rgba(15,35,120,0.18);
   display: flex; align-items: center; justify-content: space-between;
-  gap: 32px; flex-wrap: wrap;
+  gap: 40px; flex-wrap: wrap;
 }
-.contact-cta-banner h3 { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 6px; }
-.contact-cta-banner p { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.6; margin: 0; }
+/* Dot pattern overlay */
+.contact-cta-banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+/* Animated shimmer */
+.contact-cta-banner::after {
+  content: '';
+  position: absolute; top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+  animation: ccbShimmer 6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes ccbShimmer {
+  0%, 100% { left: -60%; }
+  50% { left: 120%; }
+}
+.contact-cta-banner h3 {
+  font-size: 28px; font-weight: 900; letter-spacing: -0.6px;
+  margin-bottom: 8px; position: relative; z-index: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.contact-cta-banner p {
+  font-size: 15px; color: rgba(255,255,255,0.78); line-height: 1.65;
+  margin: 0; position: relative; z-index: 1; max-width: 440px;
+}
+.ccb-text { max-width: 50%; position: relative; z-index: 1; }
+.ccb-right { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.ccb-actions { display: flex; gap: 14px; align-items: center; flex-shrink: 0; }
+.ccb-features {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-wrap: wrap; gap: 10px 14px;
+}
+.ccb-features li {
+  font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.92); letter-spacing: 0.3px;
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,0.13);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px; padding: 9px 16px; white-space: nowrap;
+  transition: all 0.25s;
+}
+.ccb-features li:hover {
+  background: rgba(255,255,255,0.20);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+.ccb-features li::before {
+  content: '\25C6'; font-size: 8px; line-height: 1;
+  color: rgba(255,255,255,0.55);
+}
+/* Premium buttons */
 .ccb-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 14px 32px; background: #fff; color: var(--brand-blue);
-  border-radius: 12px; text-decoration: none; font-size: 15px; font-weight: 800;
-  white-space: nowrap; flex-shrink: 0;
-  transition: all 0.25s; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 15px 34px; background: #fff; color: #0a1d6b;
+  border-radius: 14px; text-decoration: none; font-size: 15px; font-weight: 800;
+  white-space: nowrap; flex-shrink: 0; letter-spacing: 0.2px;
+  transition: all 0.3s cubic-bezier(0.22,0.61,0.36,1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10), 0 8px 24px rgba(0,0,0,0.08);
+  position: relative; overflow: hidden;
 }
-.ccb-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.18); }
+.ccb-btn::after {
+  content: ''; position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 60%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.ccb-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15), 0 12px 40px rgba(10,29,107,0.25);
+}
+.ccb-btn:hover::after { opacity: 1; }
+.ccb-btn:active { transform: translateY(-1px); }
 .ccb-btn-outline {
   background: transparent; color: #fff;
-  border: 2px solid rgba(255,255,255,0.4);
+  border: 2px solid rgba(255,255,255,0.35);
   box-shadow: none;
+  backdrop-filter: blur(8px);
 }
 .ccb-btn-outline:hover {
   background: rgba(255,255,255,0.12);
-  border-color: rgba(255,255,255,0.7);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-.ccb-text { max-width: 54%; }
-.ccb-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
-.ccb-right { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
-.ccb-features {
-  list-style: none; padding: 0; margin: 0;
-  display: flex; flex-wrap: wrap; gap: 8px 12px;
-}
-.ccb-features li {
-  font-size: 13px; color: rgba(255,255,255,0.85); letter-spacing: 0.2px;
-  display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,0.10); border-radius: 8px;
-  padding: 7px 14px; white-space: nowrap;
-}
-.ccb-features li::before {
-  content: '✓'; font-weight: 700; font-size: 11px;
-  color: rgba(255,255,255,0.5);
+  border-color: rgba(255,255,255,0.65);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12), 0 0 0 6px rgba(255,255,255,0.06);
 }
 
-/* ===== FOOTER ===== */
+/* ===== PREMIUM FOOTER ===== */
 .site-footer {
-  background: #0c1445; color: rgba(255,255,255,0.45);
-  padding: 40px; text-align: center; font-size: 13px; line-height: 1.8;
+  background: #0a1238; color: rgba(255,255,255,0.42);
+  padding: 44px 40px; text-align: center; font-size: 13px; line-height: 1.9;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  position: relative;
 }
-.site-footer a { color: rgba(255,255,255,0.65); text-decoration: none; }
+.site-footer::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+}
+.site-footer a { color: rgba(255,255,255,0.60); text-decoration: none; transition: color 0.2s; }
 .site-footer a:hover { color: #fff; }
 .footer-inner { max-width: 1320px; margin: 0 auto; }
 .admin-entry {
@@ -1019,6 +1306,23 @@ body {
 }
 .admin-tab:hover { color: var(--text-heading); }
 .admin-tab.active { color: var(--brand-blue); border-bottom-color: var(--brand-blue); }
+.admin-tab-manual {
+  color: #b45309;
+  margin-left: auto;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1.5px solid #fcd34d !important;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 700;
+  margin-bottom: 0;
+  box-shadow: 0 1px 3px rgba(180,83,9,0.08);
+}
+.admin-tab-manual:hover { color: #92400e; background: linear-gradient(135deg, #fef3c7, #fde68a); border-color: #f59e0b !important; }
+.admin-tab-manual.active {
+  color: #92400e;
+  border-bottom-color: #f59e0b !important;
+  background: linear-gradient(135deg, #fde68a, #fcd34d);
+}
 
 /* ===== ADMIN TOOLBAR ===== */
 .admin-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
@@ -1143,6 +1447,33 @@ body {
 .aem-btn-purple { background: #7c3aed; color: #fff; }
 .aem-btn-purple:hover { background: #6d28d9; }
 
+/* ===== ADMIN HIDDEN OPS MANUAL ===== */
+.admin-manual { background: #faf9f5; border-radius: 12px; padding: 0; border: 1.5px solid #e7e3d4; margin-bottom: 16px; overflow: hidden; }
+.admin-manual-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; cursor: pointer; user-select: none;
+  transition: background 0.2s;
+}
+.admin-manual-head:hover { background: #f5f2ea; }
+.admin-manual-head h4 { margin: 0; font-size: 14px; font-weight: 800; color: #8b7e4a; display: flex; align-items: center; gap: 8px; }
+.admin-manual-head .am-chevron {
+  font-size: 12px; transition: transform 0.25s; color: #a99b66;
+}
+.admin-manual.open .am-chevron { transform: rotate(180deg); }
+.admin-manual-body { display: none; padding: 0 20px 20px; }
+.admin-manual.open .admin-manual-body { display: block; }
+.am-item { padding: 12px 0; border-bottom: 1px solid #f0ece0; }
+.am-item:last-child { border-bottom: none; }
+.am-item-header { font-size: 13px; font-weight: 700; color: var(--text-heading); margin-bottom: 4px; }
+.am-item-trigger { font-size: 12px; color: var(--text-muted); font-family: 'SF Mono','Cascadia Code','Consolas',monospace; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #e8e3d5; display: inline-block; margin: 2px 0; }
+.am-item-desc { font-size: 12px; color: #6b6b6b; line-height: 1.7; margin-top: 4px; }
+.am-item-tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; margin-right: 6px; }
+.am-tag-pass { background: #fef2f2; color: #dc2626; }
+.am-tag-nopass { background: #f0fdf4; color: #16a34a; }
+.am-tag-click { background: #eff6ff; color: #1d3fa5; }
+.am-tag-dblclick { background: #fdf4ff; color: #9333ea; }
+.am-item-note { font-size: 11px; color: #999; font-style: italic; margin-top: 3px; }
+
 /* ===== RESPONSIVE ADMIN ===== */
 @media (max-width: 768px) {
   .admin-modal { max-width: 98%; padding: 20px 16px; max-height: 90vh; }
@@ -1180,62 +1511,99 @@ body {
 }
 .toast.show { opacity: 1; }
 
-/* ===== CONTACT MODAL ===== */
+/* ===== PREMIUM CONTACT MODAL ===== */
 .contact-overlay {
   display: none; position: fixed; inset: 0; z-index: 999;
-  background: rgba(12,20,69,0.6); backdrop-filter: blur(6px);
+  background: rgba(10,20,60,0.70);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
   align-items: center; justify-content: center;
 }
 .contact-overlay.show { display: flex; }
 .contact-modal {
-  background: #fff; border-radius: var(--radius-xl); padding: 40px 36px;
-  max-width: 480px; width: 90%; position: relative;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
-  animation: cmSlide 0.3s ease;
+  background: #fff; border-radius: 22px; padding: 44px 40px;
+  max-width: 500px; width: 92%; position: relative;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.30) inset,
+    0 32px 100px rgba(0,0,0,0.28),
+    0 8px 32px rgba(0,0,0,0.12);
+  animation: cmSlide 0.35s cubic-bezier(0.22,0.61,0.36,1);
 }
 @keyframes cmSlide {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .contact-close {
-  position: absolute; top: 16px; right: 16px;
-  width: 36px; height: 36px; border-radius: 50%; border: none;
-  background: var(--bg-page); cursor: pointer;
-  font-size: 18px; color: var(--text-muted); display: flex;
-  align-items: center; justify-content: center; transition: all 0.15s;
+  position: absolute; top: 18px; right: 18px;
+  width: 38px; height: 38px; border-radius: 50%; border: none;
+  background: #f1f5f9; cursor: pointer;
+  font-size: 20px; color: #64748b; display: flex;
+  align-items: center; justify-content: center;
+  transition: all 0.2s;
 }
-.contact-close:hover { background: #fee2e2; color: #dc2626; }
+.contact-close:hover {
+  background: #fee2e2; color: #dc2626;
+  transform: rotate(90deg);
+}
 .contact-modal h3 {
-  font-size: 24px; font-weight: 900; color: var(--text-heading);
+  font-size: 26px; font-weight: 900; color: #0f172a;
   margin-bottom: 6px; letter-spacing: -0.5px;
 }
 .contact-modal .cm-sub {
-  color: var(--text-muted); font-size: 14px; margin-bottom: 28px; line-height: 1.6;
+  color: #64748b; font-size: 14px; margin-bottom: 32px; line-height: 1.6;
 }
-.cm-channels { display: flex; flex-direction: column; gap: 12px; }
+.cm-channels { display: flex; flex-direction: column; gap: 14px; }
 .cm-channel {
-  display: flex; align-items: center; gap: 16px;
-  padding: 16px 20px; border-radius: var(--radius-md);
-  border: 1.5px solid var(--border); text-decoration: none;
-  transition: all 0.2s; background: #fafbfc;
+  display: flex; align-items: center; gap: 18px;
+  padding: 18px 22px; border-radius: 14px;
+  border: 1.5px solid #e8ecf2; text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.22,0.61,0.36,1);
+  background: #fafbfd;
+  position: relative; overflow: hidden;
 }
-.cm-channel:hover { border-color: var(--brand-blue); background: #f0f4ff; box-shadow: var(--shadow-sm); }
+.cm-channel::after {
+  content: '';
+  position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+  border-radius: 4px 0 0 4px;
+  opacity: 0; transition: opacity 0.25s;
+}
+.cm-channel:hover {
+  border-color: #c7d2fe;
+  background: #f5f7ff;
+  box-shadow: 0 6px 24px rgba(29,63,165,0.10);
+  transform: translateX(4px);
+}
+.cm-channel:hover::after { opacity: 1; }
+.cm-channel:nth-child(1)::after { background: #25d366; }
+.cm-channel:nth-child(2)::after { background: #6366f1; }
+.cm-channel:nth-child(3)::after { background: #ef4444; }
+.cm-channel.visible:nth-child(1) { transition-delay: 0.05s; }
+.cm-channel.visible:nth-child(2) { transition-delay: 0.10s; }
+.cm-channel.visible:nth-child(3) { transition-delay: 0.15s; }
 .cm-icon {
-  width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+  width: 50px; height: 50px; border-radius: 14px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center; font-size: 22px;
+  position: relative; overflow: hidden;
 }
-.cm-icon svg { width: 22px; height: 22px; }
-.cm-icon-wa { background: #ecfdf5; }
-.cm-icon-email { background: #eef2ff; }
-.cm-icon-alibaba { background: #fef2f2; }
+.cm-icon img { width: 24px; height: 24px; position: relative; z-index: 1; }
+.cm-icon-wa { background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
+.cm-icon-email { background: linear-gradient(135deg, #eef2ff, #e0e7ff); }
+.cm-icon-alibaba { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
 .cm-info { flex: 1; }
 .cm-info .cm-label {
-  font-size: 14px; font-weight: 700; color: var(--text-heading); margin-bottom: 2px;
+  font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 3px;
+  letter-spacing: -0.2px;
 }
 .cm-info .cm-val {
-  font-size: 13px; color: var(--text-muted);
+  font-size: 13px; color: #64748b;
 }
-.cm-arrow { color: var(--text-light); font-size: 16px; }
+.cm-arrow {
+  color: #94a3b8; font-size: 18px; font-weight: 600;
+  transition: all 0.25s;
+}
+.cm-channel:hover .cm-arrow {
+  color: #1d3fa5; transform: translateX(2px);
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
@@ -1243,10 +1611,12 @@ body {
   .cards-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 768px) {
-  .header-inner { padding: 0 20px; height: 64px; }
+  .header-inner { padding: 0 16px; height: 60px; gap: 12px; }
+  .header-left { gap: 8px; }
   .company-tagline { display: none; }
-  .company-name { font-size: 13px; }
-  .logo-img { height: 36px; }
+  .company-name { font-size: 14px; max-width: 160px; }
+  .logo-img { height: 32px; }
+  .header-nav { gap: 4px; }
   .hero-section { padding: 52px 0 48px; }
   .hero-inner, .features-inner, .catalog-inner, .about-inner { padding: 0 20px; }
   .hero-title { font-size: 34px; letter-spacing: -1px; }
@@ -1259,15 +1629,47 @@ body {
   .ccb-text { max-width: 100%; }
   .ccb-actions { flex-direction: column; width: 100%; }
   .ccb-btn { justify-content: center; width: 100%; }
+  .ccb-btn::after { display: none; }
   .ccb-right { align-items: stretch; }
   .breadcrumb-wrap { padding: 12px 20px; }
   .site-main { padding: 0 20px 48px; }
   .section-heading, .catalog-title { font-size: 28px; }
+  /* Product table - tablet/mobile */
+  .product-table-header { padding: 16px 18px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .product-table-title { font-size: 17px; }
+  .product-table th { padding: 11px 12px; font-size: 10.5px; }
+  .product-table td { padding: 14px 12px; font-size: 13px; }
+  .product-table .col-img { width: 80px; min-width: 80px; }
+  .product-table .col-img img { max-width: 64px; max-height: 52px; padding: 4px; }
+  .product-table .col-action { width: 90px; min-width: 90px; }
+  .table-action-btn { padding: 7px 12px; font-size: 11.5px; }
+  .table-footer { padding: 11px 18px; font-size: 11.5px; }
 }
 @media (max-width: 480px) {
+  .header-inner { padding: 0 12px; gap: 8px; }
+  .header-left { gap: 6px; }
+  .company-name { font-size: 13px; max-width: 110px; }
+  .logo-img { height: 26px; }
+  .btn-nav { display: none; }
+  .btn-alibaba { padding: 6px 10px; font-size: 11.5px; gap: 4px; }
+  .search-toggle { width: 34px; height: 34px; }
+  .search-toggle svg { width: 15px; height: 15px; }
   .features-grid { grid-template-columns: 1fr; }
   .cards-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .hero-title { font-size: 28px; }
+  /* Product table - mobile portrait */
+  .product-table-wrap { margin-bottom: 20px; }
+  .product-table-header { padding: 14px 14px; gap: 8px; }
+  .product-table-title { font-size: 15.5px; }
+  .product-table th { padding: 9px 8px; font-size: 10px; letter-spacing: 0.3px; }
+  .product-table td { padding: 12px 8px; font-size: 12.5px; }
+  .product-table .col-num { width: 36px; font-size: 11px; display: none; }
+  .product-table thead .col-num { display: none; }
+  .product-table tbody .col-num { display: none; }
+  .product-table .col-img { width: 64px; min-width: 64px; }
+  .product-table .col-img img { max-width: 50px; max-height: 42px; padding: 3px; border-radius: 6px; }
+  .product-table .col-action { width: 76px; min-width: 76px; }
+  .table-action-btn { padding: 6px 10px; font-size: 11px; border-radius: 7px; }
 }
 </style>
 </head>
@@ -1285,7 +1687,7 @@ body {
     </div>
     <nav class="header-nav">
       <button class="btn-nav" onclick="goHome()">&#8962; Home</button>
-      <a href="javascript:void(0)" onclick="openContact()" class="btn-alibaba">
+      <a href="javascript:void(0)" onclick="openContact();return false" class="btn-alibaba">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         Contact Us
       </a>
@@ -1324,10 +1726,10 @@ body {
       backed by 14 years of expertise and 100% inspection guarantee.
     </p>
     <div class="hero-cta">
-      <button onclick="document.getElementById('catalogSection').scrollIntoView({behavior:'smooth'})" class="hero-btn-primary" style="border:none;cursor:pointer;">
+      <a href="#catalogSection" class="hero-btn-primary" style="border:none;cursor:pointer;">
         Browse Catalog &nbsp;&#8594;
-      </button>
-      <a href="javascript:void(0)" onclick="openContact()" class="hero-btn-secondary">
+      </a>
+      <a href="javascript:void(0)" onclick="openContact();return false" class="hero-btn-secondary">
         Contact Us &nbsp;&#8599;
       </a>
     </div>
@@ -1372,44 +1774,44 @@ body {
 <section class="features-section" id="featuresSection">
   <div class="features-inner">
     <div class="section-eyebrow">Why Choose Yod</div>
-    <h2 class="section-heading">Built for Serious Buyers</h2>
+    <h2 class="section-heading">Built for <span class="accent">Serious Buyers</span></h2>
     <p class="section-sub">From mold design to final delivery — every step engineered for reliability, speed, and value.</p>
     <div class="features-grid">
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
         <div class="feat-title">100% Quality Inspection</div>
         <div class="feat-desc">Every product passes rigorous pre-shipment inspection. Our defect rate is kept below 0.15% — one of the industry's lowest.</div>
-        <span class="feat-metric">&lt; 0.15% Defect Rate</span>
+        <span class="feat-metric"><span class="feat-num">&lt; 0.15%</span> Defect Rate</span>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
         <div class="feat-title">Fast Sampling &amp; Customization</div>
         <div class="feat-desc">Expert plastic &amp; metal mold designers on staff. Free drawing in 3 days, physical sample in just 7 days.</div>
-        <span class="feat-metric">3 Days Drawing · 7 Days Sample</span>
+        <span class="feat-metric"><span class="feat-num">3</span> Days Drawing · <span class="feat-num">7</span> Days Sample</span>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21V13h6v8"/></svg></div>
         <div class="feat-title">Free Warehousing</div>
         <div class="feat-desc">5,000 sqm of free warehousing available for consolidated orders — reduces your logistics costs significantly.</div>
-        <span class="feat-metric">5,000 sqm Free Storage</span>
+        <span class="feat-metric"><span class="feat-num">5,000</span> sqm Free Storage</span>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div>
         <div class="feat-title">10 Patents Awarded</div>
         <div class="feat-desc">Over 10 granted patents demonstrate our commitment to innovation in HVAC accessories, plumbing, and beyond.</div>
-        <span class="feat-metric">10+ Patents</span>
+        <span class="feat-metric"><span class="feat-num">10+</span> Patents</span>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-        <div class="feat-title">1,000+ SKU One-Stop</div>
+        <div class="feat-title">40,000+ SKU One-Stop</div>
         <div class="feat-desc">Air conditioner parts, plumbing fittings, electrical supplies — sourced from one trusted partner, simplifying procurement.</div>
-        <span class="feat-metric">1,000+ SKUs</span>
+        <span class="feat-metric"><span class="feat-num">40,000+</span> SKUs</span>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
         <div class="feat-title">Global Market Coverage</div>
         <div class="feat-desc">Serving North America, Europe, South America, Oceania and beyond with efficient cross-border logistics.</div>
-        <span class="feat-metric">5 Major Markets</span>
+        <span class="feat-metric"><span class="feat-num">5</span> Major Markets</span>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
@@ -1420,8 +1822,8 @@ body {
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><polyline points="8 9 16 9"/><polyline points="8 13 14 13"/></svg></div>
         <div class="feat-title">24/7 Quick Response</div>
-        <div class="feat-desc">100% quick response rate on Alibaba. Dedicated account managers ensure same-day reply to all inquiries.</div>
-        <span class="feat-metric">100% Response Rate</span>
+        <div class="feat-desc">100% quick response rate. Dedicated account managers ensure same-day reply to all inquiries.</div>
+        <span class="feat-metric"><span class="feat-num">100%</span> Response Rate</span>
       </div>
     </div>
   </div>
@@ -1482,7 +1884,7 @@ body {
             <div class="adv-icon-wrap adv-icon-purple"><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <div class="adv-content">
               <h4>Dedicated Account Service</h4>
-              <p>100% quick response rate on Alibaba. Our English-speaking team is available 24 hours to handle quotes, orders, and after-sales.</p>
+              <p>100% quick response rate. Our English-speaking team is available 24 hours to handle quotes, orders, and after-sales.</p>
             </div>
           </div>
         </div>
@@ -1501,11 +1903,11 @@ body {
           <li>Flexible MOQ &amp; Consolidation</li>
         </ul>
         <div class="ccb-actions">
-          <a href="javascript:void(0)" onclick="document.getElementById('catalogSection').scrollIntoView({behavior:'smooth'})" class="ccb-btn ccb-btn-outline">
+          <a href="#catalogSection" class="ccb-btn ccb-btn-outline">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             Browse Catalog
           </a>
-          <a href="javascript:void(0)" onclick="openContact()" class="ccb-btn">
+          <a href="javascript:void(0)" onclick="openContact();return false" class="ccb-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             Contact Us
           </a>
@@ -1520,7 +1922,7 @@ body {
 <footer class="site-footer">
   <div class="footer-inner">
     <p>&copy; <span class="num">2026</span> Ningbo Yod Import &amp; Export Co., Ltd. All rights reserved.</p>
-    <p>Zhejiang, China &nbsp;·&nbsp; <a href="javascript:void(0)" onclick="openContact()">Contact Us</a></p>
+    <p>Zhejiang, China &nbsp;·&nbsp; <a href="javascript:void(0)" onclick="openContact();return false">Contact Us</a></p>
     <span class="admin-entry" onclick="promptAdmin()" title="Site Administration">&middot;</span>
   </div>
 </footer>
@@ -1576,6 +1978,34 @@ body {
   </div>
 </div>
 
+<!-- ===== MINI PASSWORD OVERLAY (for source trace & seller access) ===== -->
+<div class="mini-pw-overlay" id="srcPwOverlay" onclick="if(event.target===this)closeSrcPw()">
+  <div class="mini-pw-box" onclick="event.stopPropagation()">
+    <h4>&#x1F512; Admin Verification</h4>
+    <p>Enter password to view source file details</p>
+    <input type="password" id="srcPwInput" placeholder="Password" onkeydown="if(event.key==='Enter')submitSrcPw()" autocomplete="off">
+    <div class="mini-pw-error" id="srcPwError"></div>
+    <div class="mini-pw-btns">
+      <button class="mini-btn mini-btn-ghost" onclick="closeSrcPw()">Cancel</button>
+      <button class="mini-btn mini-btn-primary" onclick="submitSrcPw()">Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SELLER EXCEL VIEWER MODAL ===== -->
+<div class="seller-modal" id="sellerModal">
+  <div class="seller-modal-bg" onclick="closeSellerModal()"></div>
+  <div class="seller-modal-inner">
+    <div class="seller-modal-head">
+      <h4 id="sellerModalTitle">Seller Version</h4>
+      <button class="seller-modal-close" onclick="closeSellerModal()">&times;</button>
+    </div>
+    <div class="seller-modal-body" id="sellerModalBody">
+      <div class="sm-loading">Loading seller data...</div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== ADMIN MODAL ===== -->
 <div class="admin-overlay" id="adminOverlay" onclick="closeAdmin(event)">
   <div class="admin-modal" onclick="event.stopPropagation()" style="max-width:1100px;">
@@ -1586,6 +2016,7 @@ body {
       <button class="admin-tab" onclick="switchAdminTab('products')" id="tab-products">&#x1F4E6; Product Manager</button>
       <button class="admin-tab" onclick="switchAdminTab('export')" id="tab-export">&#x1F4E4; Export / Import</button>
       <button class="admin-tab" onclick="switchAdminTab('log')" id="tab-log">&#x1F4C4; Activity Log</button>
+      <button class="admin-tab admin-tab-manual" onclick="switchAdminTab('manual')" id="tab-manual">&#x1F4D6; Manual</button>
     </div>
     <div id="adminContent"></div>
   </div>
@@ -1602,9 +2033,9 @@ body {
     <button class="contact-close" onclick="closeContact()">&times;</button>
     <h3>Get in Touch</h3>
     <p class="cm-sub">Choose your preferred way to reach us. We typically respond within 24 hours.</p>
-    <div class="cm-channels">
+    <div class="cm-channels" id="cmChannelList">
       <a href="https://wa.me/8613656789307" target="_blank" rel="noopener" class="cm-channel">
-        <div class="cm-icon cm-icon-wa"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+        <div class="cm-icon cm-icon-wa"><img src="images/ui/ContactUs_WhatsAppicon.png?v=20260630" alt="WhatsApp" style="width:22px;height:22px;"></div>
         <div class="cm-info">
           <div class="cm-label">WhatsApp</div>
           <div class="cm-val"><span class="num">+86 136-5678-9307</span></div>
@@ -1612,7 +2043,7 @@ body {
         <span class="cm-arrow">&#8599;</span>
       </a>
       <a href="mailto:sales@yodcompany.com" class="cm-channel">
-        <div class="cm-icon cm-icon-email"><svg viewBox="0 0 24 24" fill="none" stroke="#1d3fa5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 7L2 4"/></svg></div>
+        <div class="cm-icon cm-icon-email"><img src="images/ui/ContactUs_Emailicon.png?v=20260630" alt="Email" style="width:22px;height:22px;"></div>
         <div class="cm-info">
           <div class="cm-label">Email</div>
           <div class="cm-val">sales@yodcompany.com</div>
@@ -1620,7 +2051,7 @@ body {
         <span class="cm-arrow">&#8599;</span>
       </a>
       <a href="https://yodcompany.en.alibaba.com/" target="_blank" rel="noopener" class="cm-channel">
-        <div class="cm-icon cm-icon-alibaba"><svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-4h15L21 9"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="M9 9v1a3 3 0 0 0 6 0V9"/></svg></div>
+        <div class="cm-icon cm-icon-alibaba"><img src="images/ui/ContactUs_Alibabaicon.png?v=20260630" alt="Alibaba" style="width:22px;height:22px;"></div>
         <div class="cm-info">
           <div class="cm-label">Alibaba Store</div>
           <div class="cm-val">Visit our storefront for quotes &amp; orders</div>
@@ -1659,11 +2090,21 @@ function toast(msg) {
 function openContact() {
   document.getElementById('contactOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
+  // Staggered channel animation
+  setTimeout(function(){
+    var channels = document.querySelectorAll('#cmChannelList .cm-channel');
+    channels.forEach(function(ch, i){
+      setTimeout(function(){ ch.classList.add('visible'); }, i * 60);
+    });
+  }, 80);
 }
 function closeContact(e) {
   if (e && e.target !== document.getElementById('contactOverlay')) return;
   document.getElementById('contactOverlay').classList.remove('show');
   document.body.style.overflow = '';
+  // Reset animation classes
+  var channels = document.querySelectorAll('#cmChannelList .cm-channel');
+  channels.forEach(function(ch){ ch.classList.remove('visible'); });
 }
 
 // ===== ADMIN ACCESS =====
@@ -1954,6 +2395,7 @@ function showAdminDashboard() {
   else if (ADMIN_CURRENT_TAB === 'products') renderProductsTab();
   else if (ADMIN_CURRENT_TAB === 'export') renderExportTab();
   else if (ADMIN_CURRENT_TAB === 'log') renderLogTab();
+  else if (ADMIN_CURRENT_TAB === 'manual') renderManualTab();
 }
 
 // ===== TAB: DASHBOARD =====
@@ -1995,6 +2437,65 @@ function renderDashboardTab() {
     + ' Security Verification'
     + '</button>'
     + '<span class="scan-trigger-hint">Run a security scan to verify environment integrity</span>'
+    + '</div>'
+    + '<div class="admin-manual open" id="adminManual">'
+    + '<div class="admin-manual-head" onclick="toggleManual()">'
+    + '<h4>&#x1F4D6; Admin Hidden Operations Manual / &#x7BA1;&#x7406;&#x5458;&#x9690;&#x85CF;&#x64CD;&#x4F5C;&#x8BF4;&#x660E;&#x4E66;</h4>'
+    + '<span class="am-chevron">&#x25B2;</span>'
+    + '</div>'
+    + '<div class="admin-manual-body">'
+    // Item 1: Admin Entry
+    + '<div class="am-item">'
+    + '<div class="am-item-header"><span class="am-item-tag am-tag-click">&#x1F3AF; Click</span> 1. Admin Entry Point</div>'
+    + '<div class="am-item-trigger">Page Footer &rarr; &middot; dot &rarr; Password: www666888</div>'
+    + '<div class="am-item-desc">At the very bottom of every page, click the tiny <b>&middot;</b> dot (next to "Contact Us") to open the admin password panel. Enter the password to access the full admin dashboard.</div>'
+    + '<div class="am-item-note">The dot is deliberately small and unobtrusive — only visible to those who know it exists.</div>'
+    + '</div>'
+    // Item 2: Dashboard & Security Scan
+    + '<div class="am-item">'
+    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 2. Dashboard &amp; Security Verification</div>'
+    + '<div class="am-item-trigger">Admin Panel &rarr; Dashboard tab &rarr; [Security Verification] button</div>'
+    + '<div class="am-item-desc">The Dashboard shows live stats: total products, images, files, categories, hidden/edited/custom product counts, and a category breakdown. Click <b>Security Verification</b> to run a 2.5-second animated environment integrity scan.</div>'
+    + '</div>'
+    // Item 3: Product Manager
+    + '<div class="am-item">'
+    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 3. Product Manager (CRUD)</div>'
+    + '<div class="am-item-trigger">Admin Panel &rarr; Product Manager tab</div>'
+    + '<div class="am-item-desc"><b>Search</b> by name or SKU. <b>Edit</b> any product\'s name, SKU, brand, price, image URL, or category. <b>Hide/Show</b> any product from the public catalog. <b>Add custom products</b> not in the original data. All changes are stored in your browser\'s localStorage (key: <code>yod_admin_overrides</code>). Hidden products appear with a strikethrough in the admin view.</div>'
+    + '</div>'
+    // Item 4: Export/Import
+    + '<div class="am-item">'
+    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 4. Data Export &amp; Import</div>'
+    + '<div class="am-item-trigger">Admin Panel &rarr; Export/Import tab</div>'
+    + '<div class="am-item-desc"><b>Export Full Data:</b> download all product data as a single JSON file including overrides. <b>Export Overrides Only:</b> download only your edits/hidden/custom products as a portable backup. <b>Import Overrides:</b> restore edits from a previously exported backup JSON. <b>Reset All:</b> delete all admin changes and restore hidden products to full visibility.</div>'
+    + '<div class="am-item-note">Export first before resetting — reset is irreversible!</div>'
+    + '</div>'
+    // Item 5: Activity Log
+    + '<div class="am-item">'
+    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 5. Activity Log (Audit Trail)</div>'
+    + '<div class="am-item-trigger">Admin Panel &rarr; Activity Log tab</div>'
+    + '<div class="am-item-desc">Records all admin actions with timestamps: logins, product edits, hide/show operations, security scans, data exports/imports, and resets. Use <b>Clear Log</b> to reset the log. Can <b>Copy as Table</b> for sharing or documentation.</div>'
+    + '</div>'
+    // Item 6: Source File Trace
+    + '<div class="am-item">'
+    + '<div class="am-item-header"><span class="am-item-tag am-tag-dblclick">&#x1F50D; Double-Click</span> 6. Source File Trace</div>'
+    + '<div class="am-item-trigger">Any product list page &rarr; Double-click Sheet# or product count &rarr; Password: www666888</div>'
+    + '<div class="am-item-desc">On any product listing page, <b>double-click</b> the <b>Sheet #</b> badge (top of page) or the <b>product count</b> text to reveal the original source Excel file path. This requires admin password verification (same as admin login). Once verified, the source path stays visible until page reload.</div>'
+    + '</div>'
+    // Item 7: Seller Version
+    + '<div class="am-item">'
+    + '<div class="am-item-header"><span class="am-item-tag am-tag-dblclick">&#x1F4CA; Click</span> 7. Seller Version Viewer (With Pricing)</div>'
+    + '<div class="am-item-trigger">Source Trace &rarr; [View Seller Version (with pricing)] button</div>'
+    + '<div class="am-item-desc">After revealing the source file via operation #6, click the <b>View Seller Version</b> button to open the corresponding seller Excel file in a modal. The seller version includes <b>pricing, SKU, brand, and page</b> columns that are hidden from the public buyer catalog. Parsed in-browser via SheetJS.</div>'
+    + '<div class="am-item-note">Seller files are stored in Organized_Products_V2/Organized_Excel_Seller/ — only accessible when running locally.</div>'
+    + '</div>'
+    // Summary
+    + '<div class="am-item" style="background:#fdfcfa; border-radius:8px; padding:14px; margin-top:4px; border:none;">'
+    + '<div class="am-item-header" style="color:#8b7e4a;">&#x1F510; Password Summary</div>'
+    + '<div class="am-item-desc">All admin operations use the same password: <code style="background:#fff; padding:3px 10px; border-radius:4px; font-weight:800; font-size:13px; border:1.5px solid #e7e3d4;">www666888</code><br>'
+    + 'Verification uses SHA-256 hash matching with plaintext fallback. Password is verified client-side only.</div>'
+    + '</div>'
+    + '</div>'
     + '</div>';
 
   if (TREE_DATA) {
@@ -2008,6 +2509,89 @@ function renderDashboardTab() {
     h += '</tbody></table>';
   }
   h += '<p style="font-size:11px;color:var(--text-muted);margin-top:16px;text-align:right;">Data source: tree.json + products.json &middot; Updated 2026-06-25</p>';
+
+  ac.innerHTML = h;
+}
+
+function toggleManual() {
+  var el = document.getElementById('adminManual');
+  if (el) {
+    if (el.classList.contains('open')) {
+      el.classList.remove('open');
+    } else {
+      el.classList.add('open');
+    }
+  }
+}
+
+// ===== TAB: MANUAL =====
+function renderManualTab() {
+  var ac = document.getElementById('adminContent');
+  var h = '';
+  h += '<h3 style="margin:0 0 6px 0;font-size:16px;color:var(--text-heading);">&#x1F4D6; Admin Hidden Operations Manual</h3>';
+  h += '<p style="font-size:12px;color:var(--text-muted);margin:0 0 20px 0;">Complete reference for every hidden admin feature and how to use it.</p>';
+
+  // Build manual content same as dashboard version, but standalone
+  h += '<div style="background:#faf9f5; border-radius:12px; border:1.5px solid #e7e3d4; padding:20px; line-height:1.8;">';
+
+  // Item 1
+  h += '<div style="padding:14px 0;border-bottom:1px solid #f0ece0;">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--text-heading);margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-right:8px;background:#eff6ff;color:#1d3fa5;">CLICK</span> 1. Admin Entry Point</div>';
+  h += '<div style="font-family:\'SF Mono\',\'Cascadia Code\',\'Consolas\',monospace;font-size:12px;color:var(--text-muted);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e8e3d5;display:inline-block;margin-bottom:6px;">Page Footer &rarr; click &middot; dot &rarr; enter password: www666888</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;">At the bottom of every page, click the tiny <b>&middot;</b> dot next to "Contact Us" to open the admin login panel. The dot is deliberately small and unobtrusive.</div>';
+  h += '</div>';
+
+  // Item 2
+  h += '<div style="padding:14px 0;border-bottom:1px solid #f0ece0;">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--text-heading);margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-right:8px;background:#fef2f2;color:#dc2626;">PASSWORD</span> 2. Dashboard &amp; Security Scan</div>';
+  h += '<div style="font-family:\'SF Mono\',\'Cascadia Code\',\'Consolas\',monospace;font-size:12px;color:var(--text-muted);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e8e3d5;display:inline-block;margin-bottom:6px;">Admin Panel &rarr; Dashboard tab &rarr; Click [Security Verification]</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;">Live stats overview + 2.5s animated environment integrity scan (verification of 5 security items with progress bars).</div>';
+  h += '</div>';
+
+  // Item 3
+  h += '<div style="padding:14px 0;border-bottom:1px solid #f0ece0;">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--text-heading);margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-right:8px;background:#fef2f2;color:#dc2626;">PASSWORD</span> 3. Product Manager (CRUD)</div>';
+  h += '<div style="font-family:\'SF Mono\',\'Cascadia Code\',\'Consolas\',monospace;font-size:12px;color:var(--text-muted);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e8e3d5;display:inline-block;margin-bottom:6px;">Admin Panel &rarr; Product Manager tab</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;">Search by name/SKU. Edit any product (name, SKU, brand, price, image URL, category). Hide/Show products from public catalog. Add custom products not in source data. All changes saved to <code style="background:#f8f8f8;padding:2px 6px;border-radius:3px;">localStorage: yod_admin_overrides</code>.</div>';
+  h += '</div>';
+
+  // Item 4
+  h += '<div style="padding:14px 0;border-bottom:1px solid #f0ece0;">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--text-heading);margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-right:8px;background:#fef2f2;color:#dc2626;">PASSWORD</span> 4. Data Export &amp; Import</div>';
+  h += '<div style="font-family:\'SF Mono\',\'Cascadia Code\',\'Consolas\',monospace;font-size:12px;color:var(--text-muted);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e8e3d5;display:inline-block;margin-bottom:6px;">Admin Panel &rarr; Export/Import tab</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;"><b>Export Full Data</b> — all products + overrides as JSON. <b>Export Overrides Only</b> — portable backup of edits/hidden/custom. <b>Import Overrides</b> — restore from backup. <b>Reset All</b> — wipe all changes (irreversible).</div>';
+  h += '<div style="font-size:11px;color:#999;font-style:italic;">Always export before resetting!</div>';
+  h += '</div>';
+
+  // Item 5
+  h += '<div style="padding:14px 0;border-bottom:1px solid #f0ece0;">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--text-heading);margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-right:8px;background:#fef2f2;color:#dc2626;">PASSWORD</span> 5. Activity Log (Audit Trail)</div>';
+  h += '<div style="font-family:\'SF Mono\',\'Cascadia Code\',\'Consolas\',monospace;font-size:12px;color:var(--text-muted);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e8e3d5;display:inline-block;margin-bottom:6px;">Admin Panel &rarr; Activity Log tab</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;">Timestamped record of all admin actions: logins, product edits, hide/show, security scans, exports/imports, resets. Can <b>Clear Log</b> or <b>Copy as Table</b> for documentation.</div>';
+  h += '</div>';
+
+  // Item 6
+  h += '<div style="padding:14px 0;border-bottom:1px solid #f0ece0;">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--text-heading);margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-right:8px;background:#fdf4ff;color:#9333ea;">DOUBLE-CLICK</span> 6. Source File Trace</div>';
+  h += '<div style="font-family:\'SF Mono\',\'Cascadia Code\',\'Consolas\',monospace;font-size:12px;color:var(--text-muted);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e8e3d5;display:inline-block;margin-bottom:6px;">Any product list page &rarr; Double-click Sheet# badge or product count &rarr; Enter password</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;">Reveals the original source Excel file path for the current product list. Password verification required (same as admin login). Once unlocked, the trace stays visible until page reload.</div>';
+  h += '</div>';
+
+  // Item 7
+  h += '<div style="padding:14px 0;border-bottom:1px solid #f0ece0;">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--text-heading);margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-right:8px;background:#fdf4ff;color:#9333ea;">CLICK</span> 7. Seller Version Viewer (With Pricing)</div>';
+  h += '<div style="font-family:\'SF Mono\',\'Cascadia Code\',\'Consolas\',monospace;font-size:12px;color:var(--text-muted);background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #e8e3d5;display:inline-block;margin-bottom:6px;">Source Trace &rarr; Click [View Seller Version (with pricing)] button</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;">Opens the seller Excel file (with price, SKU, brand, page columns) in a modal. Parsed in-browser using SheetJS. Only works when running locally (seller files stored in <code style="background:#f8f8f8;padding:2px 6px;border-radius:3px;">Organized_Products_V2/Organized_Excel_Seller/</code>). Press ESC or click overlay to close.</div>';
+  h += '</div>';
+
+  // Password summary
+  h += '<div style="margin-top:14px;padding:16px;background:#fdfcfa;border-radius:10px;border:1.5px solid #e7e3d4;">';
+  h += '<div style="font-size:14px;font-weight:700;color:#8b7e4a;margin-bottom:6px;">&#x1F510; Password</div>';
+  h += '<div style="font-size:12px;color:#6b6b6b;">All admin operations share one password: <code style="background:#fff;padding:3px 12px;border-radius:6px;font-weight:800;font-size:13px;border:1.5px solid #e7e3d4;display:inline-block;margin:4px 0;">www666888</code></div>';
+  h += '<div style="font-size:11px;color:#999;">SHA-256 hash verification with plaintext fallback. Client-side only.</div>';
+  h += '</div>';
+
+  h += '</div>'; // end manual card
 
   ac.innerHTML = h;
 }
@@ -2761,16 +3345,320 @@ function findFirstProductImage(node) {
 
 // ===== CATEGORY ICONS MAP (fallback only when no product image found) =====
 var catIconMap = {
-  'Plumbing': '🔧', 'Plumbing Supplies': '🔧',
-  'HVAC': '❄️', 'HVAC Supplies': '❄️',
-  'Heating': '🔥', 'Heating Supplies': '🔥', 'Heating Supplies & Parts': '🔥',
-  'Electrical': '⚡', 'Electrical Supplies': '⚡',
-  'Water': '💧', 'Water Pressure': '💧', 'Water Pressure Regulating Valves': '💧',
-  'Accessories': '🔩',
+  // Row 1: Plumbing Core
+  'Valves & Fittings': '⚙️',
+  'Pipes & PEX': '🔩',
+  // HVAC & Heating
+  'AC Installation Parts & Line Sets': '❄️',
+  'AC Equipment': '❄️',
+  'HVAC Replacement Parts': '🔩',
+  'Condensate & Refrigeration': '❄️',
+  'Ventilation & Air Distribution': '🌬️',
+  'Indoor Air Quality': '🌬️',
+  'Boilers & Heating Parts': '🔥',
+  'Radiant & Hydronic Heating': '🔥',
+  'Gas & Burner Systems': '🔥',
+  'Heat Pumps & Thermostats': '🎛️',
+  // Remaining
+  'Drains & Sewer': '🚰',
+  'Pumps & Water Treatment': '💧',
+  'Electrical Supplies': '⚡',
+  'Other': '📦',
+  // Generic fallbacks
+  'Plumbing': '🔧', 'Pipe': '🔩', 'PEX': '🔩', 'Fittings': '🔩',
+  'Valves': '⚙️', 'Fixtures': '🚿',
+  'Water Heater': '🔥', 'Boiler': '🔥', 'Radiant': '🔥', 'Heating': '🔥',
+  'HVAC': '❄️', 'Mini Split': '❄️', 'AC': '❄️', 'Refriger': '❄️',
+  'Electrical': '⚡',
+  'Pumps': '💧', 'Water': '💧',
+  'Air Quality': '🌬️', 'Ventilation': '🌬️',
+  'Gas': '🔥', 'Burner': '🔥',
+  'Controls': '🎛️', 'Thermostats': '🎛️',
+  'Chemicals': '🧪', 'Compounds': '🧪',
+  'Tools': '🛠', 'Supplies': '📦', 'Parts': '🔩',
   'Other': '📦'
 };
+var catImageMap = {
+    'Valves & Fittings':                  'images/ui/01Valves & Fittings.png?v=20260630',
+    'Pipes & PEX':                        'images/ui/02Pipes & PEX.jpg?v=20260630',
+    'AC Installation Parts & Line Sets':  'images/ui/03AC Installation Parts & Line Sets.png?v=20260630',
+    'AC Equipment':                       'images/ui/04AC Equipment.jpg?v=20260630',
+    'HVAC Replacement Parts':             'images/ui/05HVAC Replacement Parts.jpg?v=20260630',
+    'Condensate & Refrigeration':         'images/ui/06Condensate & Refrigeration.png?v=20260630',
+    'Ventilation & Air Distribution':     'images/ui/07Ventilation & Air Distribution.png?v=20260630',
+    'Indoor Air Quality':                 'images/ui/08Indoor Air Quality.png?v=20260630',
+    'Boilers & Heating Parts':            'images/ui/09Boilers & Heating Parts.jpg?v=20260630',
+    'Radiant & Hydronic Heating':         'images/ui/10Radiant & Hydronic Heating.jpg?v=20260630',
+    'Gas & Burner Systems':               'images/ui/11Gas & Burner Systems.jpg?v=20260630',
+    'Heat Pumps & Thermostats':           'images/ui/12Heat Pumps & Thermostats.jpg?v=20260630',
+    'Drains & Sewer':                     'images/ui/13Drains & Sewer.jpg?v=20260630',
+    'Pumps & Water Treatment':            'images/ui/14Pumps & Water Treatment.jpg?v=20260630',
+    'Electrical Supplies':                'images/ui/15Electrical Supplies.jpg?v=20260630',
+    'Other':                              'images/ui/16Other.png?v=20260630',
+};
+
+// ── AI-selected representative product images (2nd priority, overrides auto-fill) ──
+var catRepImageMap = {
+  'ACR Copper Fittings': 'images/2802049483/img1.png',
+  'Access Doors': 'images/1573916769/img3.png',
+  'AccuTools Tools': 'images/1536760968/img1.png',
+  'Air Cleaners': 'images/1806036746/img7.png',
+  'Air Conditioning Installation Parts': 'images/2802049483/img1.png',
+  'Air Eliminators': 'images/1951439682/img4.png',
+  'Aprilaire Dampers': 'images/4176387613/img1.png',
+  'Aquastats & Wells': 'images/134353006/img1.png',
+  'Armstrong Pumps': 'images/3468533050/img1.png',
+  'Bacharach HVAC Tools': 'images/1479534293/img1.png',
+  'Baseboard Grilles': 'images/3925685540/img1.png',
+  'Baseboard Heater Covers': 'images/2230712138/img1.png',
+  'Baseboard Heaters': 'images/2230712138/img1.png',
+  'Baseboard Registers': 'images/1596522317/img4.png',
+  'Baseboard Registers & Grilles': 'images/3759422697/img3.png',
+  'Baseboard Registers, Grilles & Covers': 'images/1938643794/img1.png',
+  'Bluefin Radiant Heat Manifolds': 'images/3705138318/img1.png',
+  'Boiler Parts': 'images/2414713155/img4.png',
+  'Bradford White Indirect Water Heaters': 'images/2157539127/img1.png',
+  'Broan Ventilation Fan Project Packs': 'images/2913369680/img3.png',
+  'Broan-NuTone Ventilation Fans': 'images/90783070/img1.png',
+  'Caleffi Air and Dirt Separators': 'images/1552839768/img1.png',
+  'Caleffi Manifolds & Accessories': 'images/4065058180/img1.png',
+  'Capacitors': 'images/2451308652/img7.png',
+  'Carrier Electrical Parts': 'images/287020065/img1.png',
+  'Carrier Installation Parts': 'images/1741224349/img1.png',
+  'Carrier Parts': 'images/870664536/img1.png',
+  'Carrier Valves & Valve Accessories': 'images/1027042715/img1.png',
+  'Circulator Pumps': 'images/57122774/img1.png',
+  'Comfort Aire Mini-Split Systems': 'images/2903143272/img1.png',
+  'Comfort-Aire Mini Split Systems': 'images/4043636277/img1.png',
+  'Commercial Registers & Grilles': 'images/1380933708/img1.png',
+  'Compressor Parts & Accessories': 'images/603064857/img4.png',  // Danfoss Start Capacitor (real part)
+  'Compressors': 'images/886523937/img1.png',
+  'Conduit Hangers & Straps': 'images/3241927989/img1.png',
+  'Copper Press Fittings': 'images/541268029/img1.png',  // ProPress Copper 90° Elbow (real fitting)
+  'Daikin Mini Split Systems': 'images/2863323479/img1.png',
+  'Damper Controls': 'images/837177020/img3.png',
+  'Dampers': 'images/3977025857/img4.png',
+  'Dehumidifiers': 'images/2163771072/img1.png',
+  'Delany Flush Valves': 'images/3875663986/img1.png',
+  'Delta Breez Ventilation Fans': 'images/1885041873/img1.png',
+  'Dielectric Unions & Nipples': 'images/1149422647/img1.png',
+  'Disconnect Switches': 'images/2963741583/img4.png',
+  'Drain Cleaners': 'images/50085192/img5.png',
+  'Drains': 'images/3518483494/img2.png',
+  'Drills': 'images/3331774115/img1.png',
+  'Drivers & Keys': 'images/990889448/img1.png',
+  'EWC Dampers': 'images/1173843844/img1.png',
+  'Easy Heat Tape - Heat Cable': 'images/4233612570/img1.png',
+  'Electric Baseboard Heaters': 'images/1224651637/img2.png',
+  'Electric Radiant Heat': 'images/4249640256/img1.png',
+  'Electrical Controls': 'images/1326152205/img1.png',
+  'Electrical Fittings': 'images/4254257133/img1.png',
+  'Electrical Hand Tools': 'images/3639608542/img1.png',
+  'Electrical Supplies': 'images/4254257133/img1.png',
+  'Electrical Tools & Instruments': 'images/843285078/img4.png',
+  'Fab 3 Fabriflex Ducting': 'images/2415621634/img1.png',
+  'Faucet & Sink Parts': 'images/1742263468/img4.png',   // 15 Series Snap-N-Tite Locking Cup Sink Basket Strainer
+  'Fieldpiece HVAC Instruments & Meters': 'images/1306425153/img1.png',
+  'Fire Sprinklers': 'images/1381306648/img1.png',
+  'Firestop Products': 'images/2044709962/img2.png',
+  'Flex Duct': 'images/1726890905/img1.png',
+  'Flex, AC, & MC Cable Fittings': 'images/2939463522/img1.png',
+  'Flexmaster Fabriflex Ducting': 'images/2415621634/img1.png',
+  'Floor Registers & Grilles': 'images/3577028905/img1.png',
+  'Flow Control Valves': 'images/473293401/img1.png',
+  'Flush Valves': 'images/3448054517/img1.png',
+  'Friedrich Ductless Mini Split Systems': 'images/3412824416/img2.png',
+  'Friedrich Ductless Mini-Split Systems': 'images/1904433662/img1.png',
+  'Galvanized Fittings': 'images/3441701879/img1.png',
+  'Garden Hose Fittings': 'images/3057236467/img3.png',
+  'Garden Hose Fittings & Adapters': 'images/3250918264/img2.png',
+  'Gas Valves & Controls': 'images/500641211/img1.png',
+  'Genteq Motors': 'images/2835223372/img1.png',
+  'Goodman-Amana Parts': 'images/3547484730/img1.png',
+  'HVAC & Refrigeration Solenoid Valves': 'images/3768698992/img1.png',
+  'HVAC Actuators and Valves': 'images/1042236264/img1.png',
+  'HVAC Controls': 'images/16946520/img1.png',
+  'HVAC Equipment': 'images/299656412/img2.png',
+  'HVAC Equipment & Systems': 'images/3208922355/img1.png',
+  'HVAC Parts & Controls': 'images/2019029707/img3.png',
+  'HVAC Replacement Parts': 'images/287020065/img1.png',
+  'HVAC and Refrigeration Valves': 'images/288074171/img1.png',
+  'Hand Tools': 'images/2915244502/img1.png',
+  'Heat & Energy Recovery Ventilators': 'images/3305855727/img1.png',
+  'Heat Pump Systems': 'images/2519370622/img3.png',
+  'Heat Pumps': 'images/2519370622/img3.png',
+  'Heating Specialties': 'images/487144537/img1.png',
+  'Heating Supplies': 'images/123196582/img1.png',
+  'Hole Saws': 'images/3933075316/img1.png',
+  'Honeywell Gas Valves': 'images/806447496/img1.png',
+  'Humidifiers': 'images/2288464765/img1.png',
+  'ICM Controls': 'images/16946520/img1.png',
+  'ICP Heil Quaker Parts': 'images/3164250909/img1.png',
+  'Ignitors & Burners': 'images/3241859121/img1.png',
+  'Indirect Water Heaters': 'images/1070300781/img3.png',
+  'Installation Parts': 'images/1031081751/img1.png',
+  'John Guest Push-Fit Fittings': 'images/2899927117/img1.png',
+  'KickSpace Heaters': 'images/3747061066/img4.png',
+  'LG Ductless Mini Split Systems': 'images/2050230445/img1.png',
+  'LG Ductless Mini-Split Systems': 'images/3828301974/img1.png',
+  'Lamps': 'images/4182497569/img3.png',
+  'Lennox Electrical Parts': 'images/530952876/img1.png',
+  'Lennox Parts': 'images/3139087474/img4.png',
+  'Lennox Valves & Valve Accessories': 'images/3256185735/img1.png',
+  'Lighting': 'images/3586018663/img1.png',
+  'MR Cool DIY Ductless Mini-Split Systems': 'images/3909954793/img1.png',
+  'MRCOOL DIY Ductless Mini Split Systems': 'images/2948191796/img1.png',
+  'Manual Flush Valves': 'images/3713559611/img1.png',
+  'Maxitrol Gas Regulators': 'images/40699937/img1.png',
+  'MegaPress Fittings': 'images/3721486343/img2.png',
+  'MegaPressG Fittings': 'images/818034342/img1.png',
+  'Milwaukee Electric Tools': 'images/3960335956/img1.png',
+  'Mini Split Air Conditioners': 'images/2050230445/img1.png',
+  'Mixing Stations': 'images/3126531573/img1.png',
+  'Modine Hydronic Unit Heaters': 'images/1980001785/img1.png',
+  'Modine Unit Heaters': 'images/4230108876/img1.png',
+  'Motor Mounting Parts': 'images/3961361036/img5.png',
+  'Motors & Accessories': 'images/1010657932/img3.png',
+  'Motors and Draft Inducers': 'images/2835223372/img1.png',
+  'Mr. PEX Manifolds': 'images/4480570/img1.png',
+  'No Hub Couplings': 'images/2849097936/img2.png',
+  'Nordyne Motors': 'images/4250689880/img1.png',
+  'Nordyne Parts': 'images/4250689880/img1.png',
+  'Oil Related Products': 'images/487144537/img1.png',
+  'Outdoor Drainage': 'images/4225337331/img1.png',
+  'Outlet Boxes': 'images/2272689232/img1.png',
+  'PEX Bend Supports': 'images/3701505633/img2.png',
+  'PEX Crimp Fittings': 'images/3635808155/img1.png',
+  'PEX Crimp Valves': 'images/2396101882/img1.png',
+  'PEX Fittings': 'images/1861988940/img2.png',
+  'PEX Plumbing': 'images/2847516066/img2.png',
+  'PEX Press Fittings': 'images/20706730/img1.png',
+  'PEX Press Valves': 'images/3832210632/img1.png',
+  'PEX Tools': 'images/4154297547/img5.png',
+  'PEX Valves': 'images/2396101882/img1.png',
+  'PVC Ball Valves': 'images/2566225761/img1.png',
+  'PVC Fittings': 'images/534056956/img1.png',
+  'PVC Primer': 'images/17886866/img1.png',
+  'PVC Tools': 'images/2613405483/img6.png',
+  'Panasonic Ventilation Fans': 'images/2944336345/img1.png',
+  'Pipe': 'images/40741923/img1.png',
+  'Pipe & Tubing Tools (Metal)': 'images/307099732/img1.png',
+  'Pipe Fittings & Nipples': 'images/646635455/img4.png',  // Copper 90° Elbow (classic fitting)
+  'Pipe Hangers & Clamps': 'images/252062564/img1.png',
+  'Pipe Support Brackets': 'images/252062564/img1.png',
+  'Pliers': 'images/2915244502/img2.png',
+  'Plumbing Chemicals & Compounds': 'images/153547493/img1.png',
+  'Plumbing Drainage': 'images/4225337331/img1.png',
+  'Plumbing Equipment': 'images/2557990285/img5.png',
+  'Plumbing Fittings & Pipes': 'images/3721486343/img1.png',
+  'Plumbing Fixtures': 'images/3049085434/img1.png',
+  'Plumbing Installation Tools': 'images/2570366375/img1.png',
+  'Plumbing Specialties': 'images/27944627/img5.png',
+  'Plumbing Test Equipment': 'images/1486028813/img1.png',
+  'PolyAlloy PEX Crimp Fittings': 'images/2289203778/img3.png',
+  'Power Tool Replacement Parts': 'images/990928185/img1.png',
+  'Power Tools': 'images/3331774115/img1.png',
+  'Pressure Relief Valves': 'images/833153457/img2.png',
+  'Pressure Valves': 'images/2803409145/img1.png',
+  'Pump Flanges': 'images/1625563585/img2.png',
+  'Pumps': 'images/2175972014/img5.png',
+  'RLS Refrigeration Press Fittings': 'images/2565436284/img1.png',
+  'Radiant Floor Heat Manifolds': 'images/2655248117/img1.png',
+  'Radiant Heat': 'images/3553526461/img2.png',
+  'Radiant Heat Controls': 'images/2488768382/img1.png',
+  'Radiant Heat Install Parts': 'images/3337929971/img1.png',
+  'Radiant Heat Manifolds': 'images/3553526461/img2.png',
+  'Radiant Heat Packages': 'images/1194101197/img1.png',
+  'Radiant Heat Panels': 'images/685656277/img1.png',
+  'Radiator Valves': 'images/2164613661/img3.png',  // Straight Thermostatic Radiator Valve (real valve)
+  'Refrigerant Copper Press Fittings': 'images/1755256019/img1.png',
+  'Refrigerant Push-Fit Fittings': 'images/3315427155/img1.png',
+  'Refrigeration Controls': 'images/3865009016/img1.png',
+  'Refrigeration Supplies': 'images/3018183819/img1.png',
+  'Registers & Grilles': 'images/1380933708/img1.png',
+  'Relief Valves': 'images/833153457/img2.png',
+  'Replacement Fan Blades': 'images/4044482872/img1.png',
+  'Rheem Parts': 'images/3025360651/img1.png',
+  'Ridgid Drain Cleaners': 'images/583626274/img1.png',
+  'Ridgid Inspection & Locating Tools': 'images/2895693190/img1.png',
+  'Ridgid Pipe Threaders': 'images/3027434929/img1.png',
+  'Ridgid Tools': 'images/3027434929/img1.png',
+  'Robertshaw Parts': 'images/1035706058/img1.png',
+  'Roof & Gutter De-Icing Cables': 'images/4233612570/img1.png',
+  'Roof Drains': 'images/3065531099/img6.png',
+  'Runtal Baseboard Radiators': 'images/3902807492/img1.png',
+  'Santa Fe Dehumidifiers & Accessories': 'images/2163771072/img1.png',
+  'Saws & Blades': 'images/3933075316/img1.png',
+  'Saws & Drill Bits': 'images/3639608542/img1.png',
+  'Sediment Filters': 'images/3191968183/img1.png',
+  'Sensor Flush Valves': 'images/3448054517/img1.png',
+  'Sewage Pumps & Accessories': 'images/3614505495/img1.png',
+  'SharkBite (Push-Fit) Valves': 'images/178375119/img1.png',
+  'SharkBite Push-Fit Fittings': 'images/2617271904/img1.png',
+  'Slab Radiant Heat Packages': 'images/1194101197/img1.png',
+  'SlantFin Baseboard Heaters': 'images/1608313907/img1.png',
+  'Sloan ECOS Flush Valves': 'images/1932647288/img1.png',
+  'Sloan Flush Valves': 'images/1442930862/img1.png',
+  'Sloan Royal Flush Valves': 'images/1442930862/img1.png',
+  'Sloan Sensor Operated Royal Water Closet Flushometers': 'images/1150095918/img1.png',
+  'Sloan Side Mount Flush Valves': 'images/2839201638/img1.png',
+  'Sloan UPPERCUT Flush Valves': 'images/3955312194/img1.png',
+  'Soldering Supplies': 'images/2743439483/img4.png',
+  'Solenoid Valves': 'images/1472076716/img4.png',
+  'Stainless Steel Gas Flex Connectors (CSST)': 'images/1307107388/img1.png',
+  'Stainless Steel Pipe Fittings': 'images/2511578057/img1.png',
+  'Suspended Pipe Radiant Heat Packages': 'images/207066784/img1.png',
+  'System Protectors': 'images/1876053211/img1.png',
+  'Taco Bronze Pumps': 'images/3084672950/img1.png',
+  'Taco Pumps': 'images/3084672950/img1.png',
+  'Tekmar Controls': 'images/4202997897/img3.png',
+  'Testo HVAC Instruments': 'images/3720151138/img1.png',
+  'Thermal Expansion Valves (TXV)': 'images/288074171/img1.png',
+  'Thermostatic Radiator Valves': 'images/2164613661/img4.png',
+  'Timers and Timer Switches': 'images/2642705391/img1.png',
+  'Toilet Parts': 'images/2963908360/img4.png',
+  'Tool Storage': 'images/1495914162/img1.png',
+  'Tools': 'images/1970659280/img1.png',
+  'Tools and Totes': 'images/1158678623/img1.png',
+  'Trane HVAC Parts': 'images/3543923948/img1.png',
+  'Trane Parts': 'images/3209116074/img1.png',
+  'Tub & Shower Products': 'images/3658273049/img3.png',
+  'Underground Gas Products': 'images/3592928079/img1.png',
+  'Unit Heaters': 'images/1648617482/img1.png',
+  'Uponor (Wirsbo) TruFLOW Manifolds': 'images/2154268599/img1.png',
+  'Uponor ProPEX Expander Fittings': 'images/3021422659/img1.png',
+  'Uponor ProPEX Expansion Valves': 'images/2451622524/img1.png',
+  'Urinals and Toilets': 'images/2944789148/img1.png',
+  'Valves':                          'images/2079384688/img1.png',   // Brass Ball Valve (representative)
+  'Valves & Waterworks':             'images/2079384688/img1.png',   // Brass Ball Valve (representative)
+  'Ventilation Fans': 'images/3257646602/img3.png',
+  'Venting': 'images/914117640/img1.png',
+  'Viega Controls & Valves': 'images/2488768382/img1.png',
+  'Viega MegaPress Press Fittings': 'images/851579286/img1.png',
+  'Water Filters': 'images/1475111309/img1.png',
+  'Water Heater Parts': 'images/2798253808/img4.png',
+  'Water Heaters': 'images/914117640/img4.png',
+  'Water Works': 'images/4032206666/img1.png',
+  'White Rodgers Gas Valves': 'images/500641211/img1.png',
+  'Wire Installation': 'images/604278357/img17.png',
+  'Workwear & Safety Gear': 'images/1038401361/img1.png',
+  'York Furnace Parts': 'images/3092504366/img1.png',
+  'York HVAC Parts': 'images/2175080826/img1.png',
+  'York Motors': 'images/309694030/img1.png',
+  'York Parts': 'images/3129169395/img3.png',
+  'Zone Valve Controls': 'images/3408679706/img1.png',
+  'Zone Valves & Controls': 'images/1221443804/img1.png',
+  'Zoning Accessories': 'images/1042236264/img1.png',
+  'Zurn Flush Valve Parts': 'images/1057798764/img1.png',
+  'Zurn Flush Valves': 'images/3448054517/img1.png',
+};
+
 function getCatIcon(name) {
   if (!name) return '📦';
+  // Check catImageMap for an exact match first (highest priority)
+  if (catImageMap[name]) {
+    return '<img src="' + catImageMap[name] + '" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" alt="">';
+  }
   for (var k in catIconMap) {
     if (name.indexOf(k) >= 0) return catIconMap[k];
   }
@@ -2878,7 +3766,7 @@ function navigateBreadcrumb(idx) {
 // ===== RENDER: HOME PAGE =====
 function renderHome() {
   var mc = document.getElementById('mainContent');
-  if (!TREE_DATA) return;
+  var cats = DISPLAY_CATS || TREE_DATA;
 
   var totalProducts = EMBEDDED_DATA ? Object.values(EMBEDDED_DATA).reduce(function(s,v){return s+(v.r?v.r.length:0);},0) : 0;
   var totalCats = countAllCategories(TREE_DATA);
@@ -2891,10 +3779,11 @@ function renderHome() {
 
   // Category cards
   var h = '<div class="cards-grid">';
-  for (var i=0; i<TREE_DATA.length; i++) {
-    var cat = TREE_DATA[i];
-    var displayName = stripNum(cat.name);
-    var imgSrc = getNodeImage(cat);
+  for (var i=0; i<cats.length; i++) {
+    var cat = cats[i];
+    var displayName = cat._displayName || stripNum(cat.name);
+    // Image priority: 1) manual hand-picked (catImageMap), 2) AI-selected representative (catRepImageMap), 3) auto (getNodeImage)
+    var imgSrc = catImageMap[displayName] || catRepImageMap[displayName] || getNodeImage(cat);
     h += '<div class="cat-card" onclick="navigateToNode(' + i + ')">';
     if (imgSrc) {
       h += '<img class="cat-card-img" src="' + esc(imgSrc) + '" alt="' + escAttr(displayName) + '" loading="lazy">';
@@ -2916,7 +3805,7 @@ function renderHome() {
 }
 
 // ===== RENDER: CATEGORY PAGE =====
-function renderCategory(node, path) {
+function renderCategory(node, parentPath) {
   var mc = document.getElementById('mainContent');
 
   // Optimization: if this is a leaf node with exactly 1 file, skip the sheet page and show table directly
@@ -2932,22 +3821,31 @@ function renderCategory(node, path) {
     setHomepageVisible(false);
     showProduct(node._files[0].path, node._files[0].name, node._files[0].no);
     updateBreadcrumb();
-    window._navCtx = {node: node, path: path};
+    window._navCtx = {node: node, path: parentPath};
     return;
   }
 
-  var displayName = stripNum(node.name);
+  var displayName = node._displayName || stripNum(node.name);
 
   var h = '<div class="sub-section-title">' + esc(displayName) + '</div>';
   h += '<div class="sub-section-sub"><span class="num">' + (node.total || 0).toLocaleString() + '</span> products in this category</div>';
 
   if (node._children && node._children.length > 0) {
+    // If node is a synthetic display category, sort children by total desc (主打在前)
+    var children = node._children.slice();
+    if (node._synthetic) {
+      children.sort(function(a,b){ return (b.total||0) - (a.total||0); });
+    }
     h += '<div class="cards-grid">';
-    for (var i=0; i<node._children.length; i++) {
-      var child = node._children[i];
-      var childDisplay = stripNum(child.name);
-      var childImg = getNodeImage(child);
-      h += '<div class="cat-card" onclick="navigateToChild(' + i + ')">';
+    for (var i=0; i<children.length; i++) {
+      var child = children[i];
+      var childDisplay = child._displayName || stripNum(child.name);
+      var childImg = catImageMap[childDisplay] || catRepImageMap[childDisplay] || getNodeImage(child);
+      // For synthetic nodes, store the index for lookup
+      var onclick = node._synthetic
+        ? 'navigateToChildByName(\'' + escAttr(child.name) + '\')'
+        : 'navigateToChild(' + i + ')';
+      h += '<div class="cat-card" onclick="' + onclick + '">';
       if (childImg) {
         h += '<img class="cat-card-img" src="' + esc(childImg) + '" alt="' + escAttr(childDisplay) + '" loading="lazy">';
       } else {
@@ -2979,18 +3877,46 @@ function renderCategory(node, path) {
     h += '</div>';
   }
 
-  window._navCtx = {node: node, path: path};
+  window._navCtx = {node: node, path: parentPath};
   mc.innerHTML = h;
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function navigateToNode(idx) {
-  navigateTo(TREE_DATA[idx], '');
+  var cats = DISPLAY_CATS || TREE_DATA;
+  if (cats[idx]._synthetic) {
+    // Synthetic display category: push nav entry and render
+    var node = cats[idx];
+    navStack.push({type:'category', node:node, path:node._displayName || stripNum(node.name), name:node._displayName || stripNum(node.name)});
+    setHomepageVisible(false);
+    renderCategory(node, '');
+  } else {
+    navigateTo(cats[idx], '');
+  }
 }
+
 function navigateToChild(idx) {
   var ctx = window._navCtx;
   if (!ctx) return;
-  navigateTo(ctx.node._children[idx], ctx.path);
+  if (ctx.node._synthetic) {
+    // For synthetic nodes, children order may differ from original,
+    // but idx still maps to the sorted _children array
+    var child = ctx.node._children[idx];
+    navigateTo(child, ctx.path);
+  } else {
+    navigateTo(ctx.node._children[idx], ctx.path);
+  }
+}
+
+function navigateToChildByName(name) {
+  var ctx = window._navCtx;
+  if (!ctx || !ctx.node._synthetic) return;
+  for (var i=0; i<ctx.node._children.length; i++) {
+    if (ctx.node._children[i].name === name) {
+      navigateTo(ctx.node._children[i], ctx.path);
+      return;
+    }
+  }
 }
 function openProductFile(idx) {
   var ctx = window._navCtx;
@@ -3070,7 +3996,7 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
         tbodyHtml += '<td' + cls + '>' + displayVal + '</td>';
       }
     }
-    tbodyHtml += '<td class="col-action"><a href="javascript:void(0)" class="table-action-btn" onclick="openContact()" title="Inquire about this product">Learn More</a></td>';
+    tbodyHtml += '<td class="col-action"><a href="javascript:void(0)" class="table-action-btn" onclick="openContact();return false" title="Inquire about this product">Learn More</a></td>';
     tbodyHtml += '</tr>';
   }
 
@@ -3078,11 +4004,13 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
   h += '<div class="product-table-header">';
   h += '<div class="product-table-title">' + esc(dispName);
   if (fileNo) {
-    h += ' <span class="product-table-pill">Sheet #' + esc(String(fileNo)) + '</span>';
+    h += ' <span class="product-table-pill" id="sheetPill" ondblclick="showSourceTrace(event)" title="Double-click for source info">Sheet #' + esc(String(fileNo)) + '</span>';
   }
   h += '</div>';
-  h += '<div class="product-table-meta"><span class="num">' + shownCount.toLocaleString() + '</span> products &nbsp;&middot;&nbsp; <span class="num">' + headers.length + '</span> columns</div>';
+  h += '<div class="product-table-meta" ondblclick="showSourceTrace(event)" style="cursor:pointer" title="Double-click for source info"><span class="num">' + shownCount.toLocaleString() + '</span> products &nbsp;&middot;&nbsp; <span class="num">' + headers.length + '</span> columns</div>';
   h += '</div>';
+  // Hidden: source file trace info
+  h += '<div class="src-trace" id="srcTrace"><strong>&#128448; Source File:</strong> ' + esc(relPath) + '<div class="src-trace-actions"><button class="src-btn src-btn-seller" onclick="showSellerVersion(event)" data-src="'+escAttr(relPath)+'">&#x1F4CA; View Seller Version (with pricing)</button><button class="src-btn src-btn-close" onclick="hideSourceTrace()">Close</button></div></div>';
   h += '<div style="overflow-x:auto;"><table class="product-table"><thead><tr>';
   for (var hi=0; hi<headers.length; hi++) {
     var htxt = headers[hi] || ('Col ' + (hi+1));
@@ -3100,11 +4028,174 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
   h += '<p style="margin:0 0 4px;">Interested in these products? Need a custom specification or OEM service? Looking for similar items not listed here?</p>';
   h += '<p style="margin:0;">Whatever your sourcing needs, we\'re ready to help. Reach out today for a quote or consultation.</p>';
   h += '</div>';
-  h += '<a href="javascript:void(0)" onclick="openContact()" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--brand-blue);color:#fff;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;box-shadow:0 2px 12px rgba(29,63,165,0.2);transition:all 0.2s;" onmouseover="this.style.background=\'var(--brand-blue-light)\';this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 6px 20px rgba(29,63,165,0.3)\'" onmouseout="this.style.background=\'var(--brand-blue)\';this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(29,63,165,0.2)\'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Contact Us About These Products &nbsp;&#8594;</a>';
+  h += '<a href="javascript:void(0)" onclick="openContact();return false" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--brand-blue);color:#fff;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;box-shadow:0 2px 12px rgba(29,63,165,0.2);transition:all 0.2s;" onmouseover="this.style.background=\'var(--brand-blue-light)\';this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 6px 20px rgba(29,63,165,0.3)\'" onmouseout="this.style.background=\'var(--brand-blue)\';this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(29,63,165,0.2)\'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Contact Us About These Products &nbsp;&#8594;</a>';
   h += '</div>';
 
   mc.innerHTML = h;
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showSourceTrace(e) {
+  e.stopPropagation();
+  if (adminUnlocked) {
+    // Already verified — toggle visibility
+    var el = document.getElementById('srcTrace');
+    if (el) {
+      var vis = el.style.display === '' || el.style.display === 'none';
+      el.style.display = vis ? 'block' : 'none';
+    }
+  } else {
+    // Need admin password
+    showSrcPwPrompt();
+  }
+}
+
+function hideSourceTrace() {
+  var el = document.getElementById('srcTrace');
+  if (el) el.style.display = 'none';
+}
+
+function showSrcPwPrompt() {
+  document.getElementById('srcPwInput').value = '';
+  document.getElementById('srcPwError').textContent = '';
+  document.getElementById('srcPwOverlay').classList.add('show');
+  setTimeout(function(){
+    var inp = document.getElementById('srcPwInput');
+    if (inp) inp.focus();
+  }, 100);
+}
+
+function closeSrcPw() {
+  document.getElementById('srcPwOverlay').classList.remove('show');
+}
+
+function submitSrcPw() {
+  var pw = document.getElementById('srcPwInput').value.trim();
+  var errEl = document.getElementById('srcPwError');
+  if (!pw) { errEl.textContent = 'Please enter password'; return; }
+
+  // Try SHA-256
+  try {
+    var encoder = new TextEncoder();
+    crypto.subtle.digest('SHA-256', encoder.encode(pw)).then(function(hash){
+      var hashHex = Array.from(new Uint8Array(hash)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+      if (hashHex === ADMIN_PASSWORD_HASH) {
+        adminUnlocked = true;
+        closeSrcPw();
+        var el = document.getElementById('srcTrace');
+        if (el) el.style.display = 'block';
+        addLog('login', 'Admin verified via source trace');
+      } else { errEl.textContent = 'Incorrect password'; }
+    }).catch(function(){
+      if (pw === 'www666888') {
+        adminUnlocked = true;
+        closeSrcPw();
+        var el = document.getElementById('srcTrace');
+        if (el) el.style.display = 'block';
+        addLog('login', 'Admin verified via source trace (fallback)');
+      } else { errEl.textContent = 'Incorrect password'; }
+    });
+  } catch(e) {
+    if (pw === 'www666888') {
+      adminUnlocked = true;
+      closeSrcPw();
+      var el = document.getElementById('srcTrace');
+      if (el) el.style.display = 'block';
+    } else { errEl.textContent = 'Incorrect password'; }
+  }
+}
+
+// ===== SELLER VERSION VIEWER =====
+var _sellerModalOpen = false;
+function showSellerVersion(e) {
+  e.stopPropagation();
+  var btn = e.currentTarget || e.target;
+  var srcPath = btn.getAttribute('data-src');
+  if (!srcPath) return;
+
+  // Derive seller path: Organized_Products_V2/... -> Organized_Products_V2/Organized_Excel_Seller/Organized_Products_V2/...
+  var sellerPath = 'Organized_Products_V2/Organized_Excel_Seller/' + srcPath;
+  document.getElementById('sellerModalTitle').innerHTML = '&#x1F4CA; Seller Version <span class="sm-badge">With Pricing</span>';
+  document.getElementById('sellerModalBody').innerHTML = '<div class="sm-loading"><div class="spinner"></div><div style="margin-top:14px;">Loading seller pricing data...</div></div>';
+  document.getElementById('sellerModal').classList.add('show');
+  _sellerModalOpen = true;
+  document.body.style.overflow = 'hidden';
+
+  // Fetch and parse seller Excel
+  parseSellerXLSX(sellerPath);
+}
+
+function closeSellerModal() {
+  document.getElementById('sellerModal').classList.remove('show');
+  _sellerModalOpen = false;
+  document.body.style.overflow = '';
+}
+
+function parseSellerXLSX(sellerPath) {
+  try {
+    var req = new XMLHttpRequest();
+    req.open('GET', sellerPath, true);
+    req.responseType = 'arraybuffer';
+    req.onload = function(){
+      var body = document.getElementById('sellerModalBody');
+      try {
+        var wb = XLSX.read(new Uint8Array(req.response), {type:'array'});
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
+        if (!rows || rows.length < 2) {
+          body.innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Seller version file is empty or unreadable.</div>';
+          return;
+        }
+        renderSellerTable(body, rows);
+      } catch(e) {
+        body.innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Failed to parse seller file: ' + esc(e.message) + '</div>';
+      }
+    };
+    req.onerror = function(){
+      document.getElementById('sellerModalBody').innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Cannot load seller file. It may not exist at:<br><span style="font-family:monospace;font-size:11px;">' + esc(sellerPath) + '</span></div>';
+    };
+    req.send();
+  } catch(e) {
+    document.getElementById('sellerModalBody').innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Error: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderSellerTable(container, rows) {
+  var headers = rows[0];
+  var dataRows = rows.slice(1);
+
+  // Filter out rows with empty first cell
+  var validRows = [];
+  for (var r = 0; r < dataRows.length; r++) {
+    var row = dataRows[r];
+    if (row && row.length > 0 && String(row[0]).trim() !== '') {
+      validRows.push(row);
+    }
+  }
+
+  var h = '<table><thead><tr>';
+  for (var hi = 0; hi < headers.length; hi++) {
+    h += '<th>' + esc(String(headers[hi] || 'Col ' + (hi+1))) + '</th>';
+  }
+  h += '</tr></thead><tbody>';
+
+  for (var ri = 0; ri < validRows.length; ri++) {
+    var row = validRows[ri];
+    h += '<tr>';
+    for (var ci = 0; ci < headers.length; ci++) {
+      var v = row[ci] !== undefined ? row[ci] : '';
+      var displayVal = esc(String(v));
+      // Style numeric values
+      if (/^-?[\d,.]+\.?\d*%?\s*$/.test(String(v).trim())) {
+        displayVal = '<span class="num">' + displayVal + '</span>';
+      }
+      h += '<td>' + displayVal + '</td>';
+    }
+    h += '</tr>';
+  }
+  h += '</tbody></table>';
+  h += '<p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:16px;"><span class="num">' + validRows.length.toLocaleString() + '</span> products in seller catalog</p>';
+
+  container.innerHTML = h;
 }
 
 // ===== SEARCH =====
@@ -3250,12 +4341,301 @@ function expandPath(parts) {
   }
 }
 
+// ===== DISPLAY CATEGORY REMAPPING (8 → 12) =====
+var DISPLAY_CATS = null;
+function buildDisplayCategories() {
+  if (!TREE_DATA) return;
+
+  // Helper to find original parent category by name
+  function findParent(name) {
+    for (var i=0; i<TREE_DATA.length; i++) {
+      if (stripNum(TREE_DATA[i].name) === name) return TREE_DATA[i];
+    }
+    return null;
+  }
+
+  // Helper to find a child by name inside a parent node
+  function findChild(parent, name) {
+    if (!parent || !parent._children) return null;
+    for (var i=0; i<parent._children.length; i++) {
+      if (stripNum(parent._children[i].name) === name) return parent._children[i];
+    }
+    return null;
+  }
+
+  // Helper: collect children matching names, sum their totals
+  function collectChildren(parent, names) {
+    var kids = [];
+    var total = 0;
+    for (var i=0; i<names.length; i++) {
+      var c = findChild(parent, names[i]);
+      if (c) { kids.push(c); total += (c.total || 0); }
+    }
+    return {children: kids, total: total};
+  }
+
+  // Helper: collect all children EXCEPT names in exclude list
+  function collectAllExcept(parent, excludeNames) {
+    if (!parent || !parent._children) return {children: [], total: 0};
+    var kids = [];
+    var total = 0;
+    for (var i=0; i<parent._children.length; i++) {
+      var name = stripNum(parent._children[i].name);
+      if (excludeNames.indexOf(name) === -1) {
+        kids.push(parent._children[i]);
+        total += (parent._children[i].total || 0);
+      }
+    }
+    return {children: kids, total: total};
+  }
+
+  // Helper to build a synthetic display category
+  function makeCat(displayName, children, total) {
+    return {
+      _displayName: displayName,
+      name: displayName,
+      _children: children,
+      total: total,
+      _synthetic: true,
+      _files: []
+    };
+  }
+
+  // === Map each original parent ===
+  var pf       = findParent('Plumbing Fittings & Pipes');
+  var fixtures = findParent('Plumbing Fixtures');
+  var valvesWW = findParent('Valves & Waterworks');
+  var pe       = findParent('Plumbing Equipment');
+  var hvacEq   = findParent('HVAC Equipment & Systems');
+  var hvacPts  = findParent('HVAC Parts & Controls');
+  var heating  = findParent('Heating Supplies');
+  var elec     = findParent('Electrical Supplies');
+
+  // ─── ROW 1: Plumbing Core ───────────────────────────────────────────────
+
+  // 1. Valves & Fittings
+  //    Waterworks valves + expansion tanks + heating pressure/relief/zone/air/radiator valves
+  //    + plumbing flush valves + faucet parts + PRVs
+  var c1a = valvesWW ? collectChildren(valvesWW, ['Valves','Water Works','Expansion Tanks']) : {children:[],total:0};
+  var c1b = heating  ? collectChildren(heating,  ['Pressure Valves','Relief Valves','Zone Valves & Controls','Flow Control Valves','Air Valves']) : {children:[],total:0};
+  var c1c = fixtures ? collectChildren(fixtures, ['Flush Valves','Faucet & Sink Parts','Faucets','Strainers']) : {children:[],total:0};
+  var c1d = pe       ? collectChildren(pe,       ['Water Pressure Regulating Valves']) : {children:[],total:0};
+  var cat1 = makeCat('Valves & Fittings',
+    c1a.children.concat(c1b.children, c1c.children, c1d.children),
+    c1a.total + c1b.total + c1c.total + c1d.total);
+
+  // 2. Pipes & PEX
+  //    All pipe/PEX/hangers/fittings from Plumbing Fittings & Pipes + pipe insulation from Heating
+  var c2a = pf      ? collectChildren(pf,      ['Pipe Fittings & Nipples','PEX Plumbing','Pipe','Pipe Hangers & Clamps','Plumbing Specialties','Outlet Boxes','Firestop Products']) : {children:[],total:0};
+  var c2b = heating ? collectChildren(heating, ['Pipe Insulation']) : {children:[],total:0};
+  var cat2 = makeCat('Pipes & PEX',
+    c2a.children.concat(c2b.children),
+    c2a.total + c2b.total);
+
+  // ─── HVAC & Heating (positioned right after Pipes & PEX) ────────────────
+
+  // 3. AC Installation Parts & Line Sets
+  //    AC installation parts (line set covers, channels, elbows) + line sets
+  var c3a = hvacPts ? collectChildren(hvacPts, ['Air Conditioning Installation Parts']) : {children:[],total:0};
+  var c3b = hvacEq  ? collectChildren(hvacEq,  ['Line Sets']) : {children:[],total:0};
+  var cat3 = makeCat('AC Installation Parts & Line Sets',
+    c3a.children.concat(c3b.children),
+    c3a.total + c3b.total);
+
+  // 4. AC Equipment
+  //    Complete AC/HVAC equipment units: mini splits, PTAC, compressors, HVAC equipment
+  var c4 = hvacEq ? collectChildren(hvacEq, ['Mini Split Air Conditioners','PTAC Air Conditioners','Compressors','HVAC Equipment']) : {children:[],total:0};
+  var cat4 = makeCat('AC Equipment', c4.children, c4.total);
+
+  // 5. HVAC Replacement Parts
+  //    Motors, HVAC replacement parts, controls, capacitors, system protectors, refrigeration valves
+  var c5a = hvacPts ? collectChildren(hvacPts, ['HVAC Replacement Parts','Motors & Accessories','HVAC Controls','Capacitors','System Protectors']) : {children:[],total:0};
+  var c5b = hvacEq  ? collectChildren(hvacEq,  ['Motors & Accessories','HVAC and Refrigeration Valves']) : {children:[],total:0};
+  var cat5 = makeCat('HVAC Replacement Parts',
+    c5a.children.concat(c5b.children),
+    c5a.total + c5b.total);
+
+  // 6. Condensate & Refrigeration
+  //    Condensate pumps, refrigeration supplies/controls, dryer parts, heat coil kits
+  var c6a = hvacEq  ? collectChildren(hvacEq,  ['Condensate Removal Pumps']) : {children:[],total:0};
+  var c6b = hvacPts ? collectChildren(hvacPts, ['Refrigeration Supplies','Refrigeration Controls','Dryer Parts','Electric Heat Coil Restring Kits','Refrigerator Parts','Swamp Cooler and Ice Maker Pumps']) : {children:[],total:0};
+  var cat6 = makeCat('Condensate & Refrigeration',
+    c6a.children.concat(c6b.children),
+    c6a.total + c6b.total);
+
+  // 7. Ventilation & Air Distribution
+  //    Ventilation fans, range hoods, dampers, registers & grilles, flex duct
+  var c7a = hvacEq  ? collectChildren(hvacEq,  ['Ventilation Fans','Range Hoods']) : {children:[],total:0};
+  var c7b = hvacPts ? collectChildren(hvacPts, ['Dampers','Registers & Grilles','Flex Duct']) : {children:[],total:0};
+  var cat7 = makeCat('Ventilation & Air Distribution',
+    c7a.children.concat(c7b.children),
+    c7a.total + c7b.total);
+
+  // 8. Indoor Air Quality
+  //     Air cleaners, ERV/HRV, dehumidifiers, humidifiers, replacement filters, UV/temp controllers
+  var c8a = hvacEq  ? collectChildren(hvacEq,  ['Air Cleaners','Heat & Energy Recovery Ventilators','Dehumidifiers','Humidifiers']) : {children:[],total:0};
+  var c8b = hvacPts ? collectChildren(hvacPts, ['Replacement Filters','Temperature Controllers','Hand Dryers']) : {children:[],total:0};
+  var cat8 = makeCat('Indoor Air Quality',
+    c8a.children.concat(c8b.children),
+    c8a.total + c8b.total);
+
+  // 9. Boilers & Heating Parts
+  //     Boilers, boiler parts, circulator pumps, expansion tanks, air eliminators,
+  //     aquastats, low water cutoffs, switching relays, T&P gauges, water feeders,
+  //     flow switches, magnetic filters, boiler trim, tankless coils
+  //     + Water Heater Parts (from Plumbing Equipment)
+  var c9a = heating ? collectChildren(heating, [
+    'Boilers','Boiler Parts','Circulator Pumps','Expansion Tanks',
+    'Air Eliminators','Aquastats & Wells','Low Water Cutoffs',
+    'Flow Switches','Magnetic Boiler Filters','Switching Relays',
+    'Temperature & Pressure Gauges','Water Feeders','Boiler Trim Kits','Tankless Coils'
+  ]) : {children:[],total:0};
+  var c9b = pe ? collectChildren(pe, ['Water Heater Parts']) : {children:[],total:0};
+  var cat9 = makeCat('Boilers & Heating Parts',
+    c9a.children.concat(c9b.children),
+    c9a.total + c9b.total);
+
+  // 10. Radiant & Hydronic Heating
+  //     Radiant heat, baseboard heaters, kickspace heaters, unit heaters,
+  //     radiator valves, roof/gutter de-icing cables
+  var c10 = heating ? collectChildren(heating, [
+    'Radiant Heat','Baseboard Heaters','KickSpace Heaters','Unit Heaters',
+    'Radiator Valves','Roof & Gutter De-Icing Cables'
+  ]) : {children:[],total:0};
+  var cat10 = makeCat('Radiant & Hydronic Heating', c10.children, c10.total);
+
+  // 11. Gas & Burner Systems
+  //     Gas valves & controls, ignitors & burners, Maxitrol gas regulators,
+  //     underground gas products, heating specialties
+  var c11 = heating ? collectChildren(heating, [
+    'Gas Valves & Controls','Ignitors & Burners','Maxitrol Gas Regulators',
+    'Underground Gas Products','Heating Specialties'
+  ]) : {children:[],total:0};
+  var cat11 = makeCat('Gas & Burner Systems', c11.children, c11.total);
+
+  // 12. Heat Pumps & Thermostats
+  //     Heat pumps, thermostats, Tekmar controls
+  var c12 = heating ? collectChildren(heating, ['Heat Pumps','Thermostats','Tekmar Controls']) : {children:[],total:0};
+  var cat12 = makeCat('Heat Pumps & Thermostats', c12.children, c12.total);
+
+  // ─── Remaining Plumbing ────────────────────────────────────────────────
+
+  // 13. Drains & Sewer
+  //     Drainage from Plumbing Fittings & Pipes + drains/access doors from Fixtures + grease traps
+  var c13a = pf       ? collectChildren(pf,       ['Plumbing Drainage']) : {children:[],total:0};
+  var c13b = fixtures ? collectChildren(fixtures, ['Drains','Access Doors']) : {children:[],total:0};
+  var c13c = pe       ? collectChildren(pe,       ['Grease Traps']) : {children:[],total:0};
+  var cat13 = makeCat('Drains & Sewer',
+    c13a.children.concat(c13b.children, c13c.children),
+    c13a.total + c13b.total + c13c.total);
+
+  // 14. Pumps & Water Treatment
+  //     Pumps, water filters, well tanks, fire sprinklers, macerating systems
+  var c14 = pe ? collectChildren(pe, ['Pumps','Water Filters','Well Pressure Tanks & Parts','Fire Sprinklers','Macerating Toilet Systems']) : {children:[],total:0};
+  var cat14 = makeCat('Pumps & Water Treatment', c14.children, c14.total);
+
+  // ─── Electrical + Other ────────────────────────────────────────────────
+
+  // 15. Electrical Supplies  (exclude Electrical Tools & Instruments)
+  var cat15 = elec
+    ? makeCat('Electrical Supplies',
+        collectAllExcept(elec, ['Electrical Tools & Instruments']).children,
+        collectAllExcept(elec, ['Electrical Tools & Instruments']).total)
+    : makeCat('Electrical Supplies', [], 0);
+
+  // 16. Other
+  //     ─ Plumbing Equipment: Tools(2958), Water Heaters整机(532), Accessories(25), Steam Showers(17)
+  //     ─ Plumbing Fixtures:  Tub & Shower(730), Toilet Parts(534), Sinks(48), Garbage Disposals(48),
+  //                            Urinals and Toilets(40), Sloan(2)
+  //     ─ HVAC Parts:         Tools(853)
+  //     ─ Electrical:         Electrical Tools & Instruments(531)
+  //     ─ Chemicals:          Plumbing Chemicals & Compounds + Chemicals & Cleaners(441)
+  var c16a = pe      ? collectChildren(pe,      ['Tools','Water Heaters','Accessories','Steam Showers','Plumbing Chemicals & Compounds']) : {children:[],total:0};
+  var c16b = fixtures ? collectChildren(fixtures,['Tub & Shower Products','Toilet Parts','Sinks','Garbage Disposals','Urinals and Toilets','Sloan Sensor Operated Optima SMOOTH Flushometers']) : {children:[],total:0};
+  var c16c = hvacPts ? collectChildren(hvacPts, ['Tools','Chemicals & Cleaners']) : {children:[],total:0};
+  var c16d = elec    ? collectChildren(elec,    ['Electrical Tools & Instruments']) : {children:[],total:0};
+  var cat16 = makeCat('Other',
+    c16a.children.concat(c16b.children, c16c.children, c16d.children),
+    c16a.total + c16b.total + c16c.total + c16d.total);
+
+  DISPLAY_CATS = [cat1, cat2, cat3, cat4, cat5, cat6, cat7, cat8, cat9, cat10, cat11, cat12, cat13, cat14, cat15, cat16];
+}
+
+
 // ===== INIT =====
 function initApp() {
   if (!TREE_DATA || !SEARCH_DATA) { console.error('Data not loaded'); return; }
   buildSearchIndex();
   goHome(true);
+  // Global ESC handler for seller modal & mini password
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape') {
+      if (_sellerModalOpen) { closeSellerModal(); ev.preventDefault(); }
+      else if (document.getElementById('srcPwOverlay').classList.contains('show')) { closeSrcPw(); ev.preventDefault(); }
+    }
+  });
 }
 </script>
+<script>
+(function(){
+  var grid = document.querySelector('.features-grid');
+  if (!grid) return;
+  var cards = grid.querySelectorAll('.feat-card');
+  if (cards.length === 0) return;
+
+  var idx = 0;
+  var timer = null;
+  var paused = false;
+  var resumeFrom = 0;
+  var INTERVAL = 1400; // ms per glow step
+
+  function glowOnly(n) {
+    for (var i = 0; i < cards.length; i++) {
+      if (i === n) cards[i].classList.add('glow');
+      else cards[i].classList.remove('glow');
+    }
+  }
+
+  function step() {
+    if (paused) return;
+    glowOnly(idx);
+    idx = (idx + 1) % cards.length;
+  }
+
+  function startCycle(fromIdx) {
+    idx = fromIdx;
+    // Remove glow first so the first step re-adds it fresh
+    for (var i = 0; i < cards.length; i++) cards[i].classList.remove('glow');
+    // Force an immediate step
+    glowOnly(idx);
+    idx = (idx + 1) % cards.length;
+    // Clear any existing timer
+    if (timer) { clearInterval(timer); timer = null; }
+    timer = setInterval(step, INTERVAL);
+  }
+
+  // ── Hover: pause → highlight hovered card ──
+  for (var i = 0; i < cards.length; i++) {
+    (function(ci){
+      cards[ci].addEventListener('mouseenter', function(){
+        paused = true;
+        if (timer) { clearInterval(timer); timer = null; }
+        glowOnly(ci);
+        resumeFrom = ci;
+      });
+    })(i);
+  }
+
+  // ── Leave grid: resume from the last hovered card ──
+  grid.addEventListener('mouseleave', function(){
+    paused = false;
+    startCycle(resumeFrom);
+  });
+
+  // ── Initial cycle ──
+  startCycle(0);
+})();
+</script>
+
 </body>
 </html>
