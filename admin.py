@@ -40,8 +40,39 @@ IMAGES_DIR = os.path.join(BASE_DIR, 'images')
 TREE_FILE = 'tree.json'
 PRODUCTS_FILE = 'products.json'
 SEARCH_FILE = 'search.json'
+META_FILE = 'meta.json'
 
 DEFAULT_HEADERS = ['#', 'Image', 'Product Name']
+
+
+# ============================================================
+#  全局产品编号 (永久唯一 ID)
+# ============================================================
+
+def get_meta():
+    m = read_json(META_FILE)
+    if not m:
+        m = {'next_id': 1, 'id_prefix': 'YOD-', 'id_pad': 6, 'total_assigned': 0}
+    return m
+
+
+def alloc_id():
+    """取一个新的全局唯一产品 ID,并递增计数器。"""
+    m = get_meta()
+    nid = int(m.get('next_id', 1))
+    m['next_id'] = nid + 1
+    m['total_assigned'] = int(m.get('total_assigned', 0)) + 1
+    write_json(META_FILE, m)
+    return nid
+
+
+def fmt_gid(gid):
+    """把全局 ID 格式化为 YOD-000123。"""
+    m = get_meta()
+    try:
+        return '%s%0*d' % (m.get('id_prefix', 'YOD-'), int(m.get('id_pad', 6)), int(gid))
+    except (ValueError, TypeError):
+        return str(gid)
 
 
 # ============================================================
@@ -102,10 +133,8 @@ def implode(items, headers):
 
 
 def renumber(items):
-    """重排每行的显示序号 row[0] = 0,1,2...(保持与位置一致,更干净)。"""
-    for pos, it in enumerate(items):
-        if it['row']:
-            it['row'][0] = pos
+    """(已停用重排) row[0] 现在是【永久全局 ID】,移动/合并/拆分都不能改动它,
+    否则会破坏"产品终身唯一编号"。保留此函数仅为兼容调用点,直接原样返回。"""
     return items
 
 
@@ -587,10 +616,13 @@ def get_products():
         headers = entry.get('h', [])
         imgs = entry.get('i', {})
         for pos, row in enumerate(entry.get('r', [])):
+            gid = row[0] if len(row) > 0 else pos
             item = {
                 'filepath': filepath,
                 'pos': pos,
-                'num': row[0] if len(row) > 0 else pos,
+                'num': gid,
+                'gid': gid,
+                'code': fmt_gid(gid),
                 'image': imgs.get(str(pos), ''),
                 'name': str(row[2]) if len(row) > 2 else '',
             }
@@ -613,9 +645,12 @@ def get_table_rows():
     imgs = entry.get('i', {})
     rows = []
     for pos, row in enumerate(entry.get('r', [])):
+        gid = row[0] if row else pos
         rows.append({
             'pos': pos,
-            'num': row[0] if row else pos,
+            'num': gid,
+            'gid': gid,
+            'code': fmt_gid(gid),
             'name': str(row[2]) if len(row) > 2 else '',
             'image': imgs.get(str(pos), ''),
             'cells': [str(x) if x is not None else '' for x in row],
@@ -683,9 +718,10 @@ def add_product():
     headers = entry.get('h', DEFAULT_HEADERS)
     rows = entry.get('r', [])
     pos = len(rows)
+    gid = alloc_id()  # 永久全局唯一编号
     row = [''] * len(headers)
     if len(row) > 0:
-        row[0] = pos
+        row[0] = gid
     if len(row) > 2:
         row[2] = name
     for col, val in extra.items():
@@ -697,7 +733,7 @@ def add_product():
     backup_data()
     write_json(PRODUCTS_FILE, products)
     _sync_totals_for_file(filepath)
-    return jsonify({'ok': True, 'pos': pos})
+    return jsonify({'ok': True, 'pos': pos, 'gid': gid})
 
 
 @app.route('/api/product/delete', methods=['POST'])

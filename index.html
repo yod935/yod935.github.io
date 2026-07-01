@@ -668,7 +668,14 @@ img { -webkit-user-drag: none; user-select: none; }
 .product-table tbody tr:last-child td {
   border-bottom: none;
 }
-.product-table .col-num { width: 56px; color: #94a3b8; font-weight: 800; text-align: center; font-size: 13px; }
+.product-table .col-num { width: 104px; color: #94a3b8; font-weight: 800; text-align: center; font-size: 13px; }
+.prod-code {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.3px;
+  color: var(--brand-blue); background: #eef3ff;
+  padding: 3px 9px; border-radius: 6px; white-space: nowrap;
+  border: 1px solid rgba(29,63,165,0.10);
+}
 .product-table .col-img { width: 110px; text-align: center; }
 .product-table .col-img img {
   max-width: 92px; max-height: 72px;
@@ -1806,7 +1813,7 @@ body, .product-table, .cat-card, .breadcrumb-wrap, .hero-section,
   <div class="search-bar" id="searchBar">
     <div class="search-bar-inner">
       <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="searchInput" placeholder="Search products by name, number (#1234), or category..." autocomplete="off">
+      <input type="text" id="searchInput" placeholder="Search products by name or category..." autocomplete="off">
       <div class="search-results" id="searchResults"></div>
     </div>
   </div>
@@ -2278,6 +2285,16 @@ function escAttr(s) {
 }
 function stripNum(s) {
   return String(s).replace(/^\d{2}_/, '');
+}
+// Format the permanent global product ID (column 0) as YOD-000123
+var PRODUCT_ID_PREFIX = 'YOD-';
+var PRODUCT_ID_PAD = 6;
+function fmtProductId(v) {
+  var n = parseInt(v, 10);
+  if (isNaN(n)) return String(v == null ? '' : v);
+  var s = String(n);
+  while (s.length < PRODUCT_ID_PAD) s = '0' + s;
+  return PRODUCT_ID_PREFIX + s;
 }
 function toast(msg) {
   var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
@@ -4176,11 +4193,13 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
     for (var c=0; c<headers.length; c++) {
       var v = dataRows[r][c] !== undefined ? dataRows[r][c] : '';
       var cls = c===0 ? ' class="col-num"' : '';
-      var displayVal = esc(String(v));
-      if (c === imgColIdx && imgMap[r] !== undefined) {
+      if (c === 0) {
+        // Column 0 = permanent global product ID -> render as YOD-000123
+        tbodyHtml += '<td class="col-num"><span class="prod-code">' + esc(fmtProductId(v)) + '</span></td>';
+      } else if (c === imgColIdx && imgMap[r] !== undefined) {
         tbodyHtml += '<td class="col-img"><img src="' + esc(imgMap[r]) + '" alt="product" loading="lazy"></td>';
       } else {
-        tbodyHtml += '<td' + cls + '>' + displayVal + '</td>';
+        tbodyHtml += '<td' + cls + '>' + esc(String(v)) + '</td>';
       }
     }
     // Inline seller (price) columns — only in price mode
@@ -4215,7 +4234,7 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
   h += '<div class="src-trace" id="srcTrace"><strong>&#128448; Source File:</strong> ' + esc(relPath) + '<div class="src-trace-actions"><button class="src-btn src-btn-close" onclick="hideSourceTrace()">Close</button></div></div>';
   h += '<div style="overflow-x:auto;"><table class="product-table"><thead><tr>';
   for (var hi=0; hi<headers.length; hi++) {
-    var htxt = headers[hi] || ('Col ' + (hi+1));
+    var htxt = hi===0 ? 'Product ID' : (headers[hi] || ('Col ' + (hi+1)));
     var thcls = hi===0 ? ' class="col-num"' : '';
     h += '<th' + thcls + '>' + esc(String(htxt)) + '</th>';
   }
