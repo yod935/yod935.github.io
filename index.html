@@ -20,7 +20,9 @@
     TREE_DATA = results[0];
     SEARCH_DATA = results[1];
     EMBEDDED_DATA = results[2];
-    buildDisplayCategories();
+    // tree.json is now the real 16-category structure (physically refactored).
+    // The old runtime assembler is no longer used; DISPLAY_CATS mirrors TREE_DATA.
+    DISPLAY_CATS = TREE_DATA;
     initApp();
   }).catch(function(err){
     console.error('Data load error:', err);
@@ -69,6 +71,20 @@ body {
   background: var(--bg-page); color: var(--text-body); line-height: 1.6; min-height: 100vh;
   display: flex; flex-direction: column;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+/* Premium global polish */
+::selection { background: rgba(29,63,165,0.16); color: var(--text-heading); }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,#c7d0e0,#aeb9cf);
+  border-radius: 10px; border: 3px solid var(--bg-page);
+}
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#9fb0cc,#8494b3); }
+img { -webkit-user-drag: none; user-select: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
 
 /* ===== HEADER ===== */
@@ -240,6 +256,23 @@ body {
   background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
                     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size: 40px 40px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 90% at 30% 20%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 90% 90% at 30% 20%, #000 20%, transparent 75%);
+}
+/* Floating glow orbs in hero */
+.hero-section .hero-orb {
+  position: absolute; border-radius: 50%; z-index: 2; pointer-events: none;
+  filter: blur(48px); opacity: 0.55;
+}
+.hero-section .hero-orb.o1 { width: 340px; height: 340px; right: -60px; top: -80px;
+  background: radial-gradient(circle, rgba(96,165,250,0.55), transparent 70%);
+  animation: orbFloat 14s ease-in-out infinite; }
+.hero-section .hero-orb.o2 { width: 260px; height: 260px; left: 8%; bottom: -100px;
+  background: radial-gradient(circle, rgba(224,32,32,0.28), transparent 70%);
+  animation: orbFloat 18s ease-in-out infinite reverse; }
+@keyframes orbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(-24px, 26px) scale(1.08); }
 }
 .hero-inner {
   max-width: 1320px; margin: 0 auto; padding: 0 40px;
@@ -265,8 +298,13 @@ body {
 .hero-title {
   font-size: 52px; font-weight: 900; color: #fff; line-height: 1.1;
   letter-spacing: -2px; margin-bottom: 20px; max-width: 700px;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.18);
 }
-.hero-title .accent { color: #fbbf24; }
+.hero-title .accent {
+  color: #fbbf24;
+  background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
 .hero-subtitle {
   font-size: 18px; color: rgba(255,255,255,0.75); line-height: 1.7;
   max-width: 560px; margin-bottom: 40px; font-weight: 400;
@@ -299,6 +337,7 @@ body {
 .hero-stat .hnum {
   font-size: 34px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 .hero-stat .hlabel {
   font-size: 12.5px; color: rgba(255,255,255,0.60); font-weight: 600;
@@ -427,6 +466,7 @@ body {
 }
 .feat-num {
   font-weight: 800; letter-spacing: 0.02em; font-size: 12.5px;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 /* ===== CATEGORY SECTION ===== */
@@ -448,33 +488,53 @@ body {
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 22px;
 }
+/* Staggered entrance for category/table cards */
+@keyframes cardFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 .cat-card {
   background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden;
   box-shadow: var(--shadow-sm); border: 1px solid var(--border-light);
-  cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  cursor: pointer; transition: transform 0.32s cubic-bezier(0.4,0,0.2,1), box-shadow 0.32s cubic-bezier(0.4,0,0.2,1), border-color 0.32s;
   text-decoration: none; color: inherit; display: block; position: relative;
+  animation: cardFadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+}
+.cat-card:nth-child(1){animation-delay:.02s}.cat-card:nth-child(2){animation-delay:.05s}
+.cat-card:nth-child(3){animation-delay:.08s}.cat-card:nth-child(4){animation-delay:.11s}
+.cat-card:nth-child(5){animation-delay:.14s}.cat-card:nth-child(6){animation-delay:.17s}
+.cat-card:nth-child(7){animation-delay:.20s}.cat-card:nth-child(8){animation-delay:.23s}
+.cat-card:nth-child(n+9){animation-delay:.26s}
+.cat-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 1.5px rgba(29,63,165,0); pointer-events: none; transition: box-shadow 0.32s;
 }
 .cat-card:hover {
   transform: translateY(-8px); box-shadow: var(--shadow-hover);
   border-color: #c7d6ff;
 }
+.cat-card:hover::after { box-shadow: inset 0 0 0 1.5px rgba(29,63,165,0.18); }
 .cat-card-img {
   width: 100%; height: 180px; object-fit: contain; display: block;
-  background: #ffffff; padding: 16px;
+  background: radial-gradient(circle at 50% 38%, #ffffff 0%, #f7f9fe 100%); padding: 18px;
+  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
 }
+.cat-card:hover .cat-card-img { transform: scale(1.05); }
 .cat-card-img.placeholder {
   display: flex; align-items: center; justify-content: center;
   font-size: 48px; color: #a3bffa; background: linear-gradient(135deg, #f8fafc 0%, #edf2ff 100%);
   position: relative; overflow: hidden;
 }
-.cat-card-body { padding: 20px 22px 22px; }
+.cat-card-body { padding: 18px 22px 20px; border-top: 1px solid #f1f4fb; }
 .cat-card-name {
   font-size: 15px; font-weight: 800; color: var(--text-heading); line-height: 1.3;
   margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   min-height: 39px; /* 2 lines × 15px × 1.3 — keeps cards uniform */
+  transition: color 0.2s;
 }
+.cat-card:hover .cat-card-name { color: var(--brand-blue); }
 .cat-card-meta {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: flex-end;
 }
 .cat-card-count {
   font-size: 12px; color: var(--text-muted); font-weight: 600;
@@ -486,7 +546,7 @@ body {
   border: 1.5px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   color: var(--brand-blue); font-size: 13px;
-  transition: all 0.2s;
+  transition: all 0.25s;
 }
 .cat-card:hover .cat-card-arrow { transform: translateX(4px); border-color: var(--brand-blue); background: var(--brand-blue); color: #fff; }
 
@@ -519,8 +579,11 @@ body {
   content: '';
   position: absolute; top: 0; left: 0; right: 0;
   height: 3px; background: linear-gradient(90deg, var(--brand-blue), #60a5fa, var(--brand-blue));
-  opacity: 0.7;
+  background-size: 200% 100%;
+  opacity: 0.85;
+  animation: sheenSlide 6s linear infinite;
 }
+@keyframes sheenSlide { 0%{background-position:0% 0} 100%{background-position:200% 0} }
 .product-table-header {
   padding: 22px 28px 20px;
   display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
@@ -574,7 +637,7 @@ body {
 .seller-modal-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .seller-modal-body th { background: #f8faff; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); white-space: nowrap; }
 .seller-modal-body td { padding: 9px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-.seller-modal-body .num { font-family: 'SF Mono','Cascadia Code','Consolas',monospace; font-weight: 700; }
+.seller-modal-body .num { font-variant-numeric: lining-nums tabular-nums; font-weight: 700; }
 .seller-modal-body tr:hover td { background: #fafbff; }
 .product-table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .product-table thead tr {
@@ -664,7 +727,15 @@ body {
 }
 .num {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-feature-settings: "tnum";
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum", "lnum";
+}
+/* Force clean lining figures for ALL digits site-wide (Georgia uses wobbly
+   old-style figures by default). This keeps numbers upright & aligned. */
+body, .product-table, .cat-card, .breadcrumb-wrap, .hero-section,
+.about-section, .product-table-meta, .table-footer, .sub-section-sub {
+  font-variant-numeric: lining-nums;
+  font-feature-settings: "lnum" 1;
 }
 
 /* ===== EMPTY / LOADING ===== */
@@ -1240,6 +1311,42 @@ body {
   max-width: 720px; width: 92%; max-height: 80vh; overflow-y: auto;
   box-shadow: 0 24px 64px rgba(0,0,0,0.2);
 }
+/* Price mode banner + guide (internal console) */
+.price-banner {
+  display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+  background: linear-gradient(135deg,#fff8e6,#fff2cc); border: 1px solid #f0d98a;
+  border-radius: 14px; margin-bottom: 20px;
+}
+.price-banner-icon { font-size: 26px; }
+.price-banner-title { font-weight: 800; color: #8a6d16; font-size: 15px; }
+.price-banner-sub { font-size: 12.5px; color: #7a6a3a; line-height: 1.5; margin-top: 2px; }
+.price-banner-toggle {
+  margin-left: auto; flex-shrink: 0; border: none; cursor: pointer;
+  background: #d97706; color: #fff; font-weight: 700; font-size: 13px;
+  padding: 9px 18px; border-radius: 9px; transition: background .2s;
+}
+.price-banner-toggle:hover { background: #b45309; }
+.price-mode-pill {
+  font-size: 11px; font-weight: 800; background: linear-gradient(135deg,#fbbf24,#f59e0b);
+  color: #78350f; padding: 3px 10px; border-radius: 100px; margin-left: 10px;
+  vertical-align: middle;
+}
+.product-table th.col-seller, .product-table td.col-seller {
+  background: #fffdf5;
+}
+.product-table td.col-seller { color: var(--text-muted); font-size: 12.5px; white-space: nowrap; }
+.price-cell { font-weight: 800; color: #b45309; }
+.guide-wrap { line-height: 1.7; }
+.guide-lead { font-size: 14px; color: var(--text-body); background: #f0f4ff; border: 1px solid #dbe4ff; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; }
+.guide-step { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+.guide-num { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--brand-blue); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.guide-h { font-weight: 800; color: var(--text-heading); font-size: 14.5px; margin-bottom: 3px; }
+.guide-d { font-size: 13px; color: var(--text-muted); }
+.guide-d code, .guide-lead code { background: #eef1f7; padding: 2px 7px; border-radius: 5px; font-size: 12px; }
+.guide-note { margin-top: 18px; padding: 14px 18px; background: #fdfcfa; border: 1px solid #ece7d6; border-radius: 12px; font-size: 13px; color: #6b6b6b; }
+.guide-tips { margin-top: 14px; font-size: 13px; color: var(--text-body); }
+.guide-tips ul { margin: 8px 0 0 18px; }
+.guide-tips li { margin-bottom: 6px; }
 .admin-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
   gap: 14px; margin-bottom: 20px;
@@ -1714,6 +1821,8 @@ body {
 <!-- ===== HERO (shown only on homepage, hidden on subpages) ===== -->
 <section class="hero-section" id="heroSection">
   <div class="c-hero-grid"></div>
+  <div class="hero-orb o1"></div>
+  <div class="hero-orb o2"></div>
   <div class="hero-inner">
     <div class="hero-eyebrow"><span class="dot"></span> Trusted HVAC &amp; Plumbing Supplier</div>
     <h1 class="hero-title">
@@ -2006,17 +2115,15 @@ body {
   </div>
 </div>
 
-<!-- ===== ADMIN MODAL ===== -->
+<!-- ===== INTERNAL / SALES PANEL ===== -->
 <div class="admin-overlay" id="adminOverlay" onclick="closeAdmin(event)">
-  <div class="admin-modal" onclick="event.stopPropagation()" style="max-width:1100px;">
+  <div class="admin-modal" onclick="event.stopPropagation()" style="max-width:920px;">
     <button class="contact-close" onclick="closeAdmin()">&times;</button>
-    <h3 style="font-size:20px;margin-bottom:4px;">&#x1F512; Administration</h3>
+    <h3 style="font-size:20px;margin-bottom:4px;">&#x1F513; Internal Sales Console</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Signed-in internal view. Pricing &amp; supplier data are visible to you only — never to public visitors.</p>
     <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchAdminTab('dashboard')" id="tab-dashboard">&#x1F4CA; Dashboard</button>
-      <button class="admin-tab" onclick="switchAdminTab('products')" id="tab-products">&#x1F4E6; Product Manager</button>
-      <button class="admin-tab" onclick="switchAdminTab('export')" id="tab-export">&#x1F4E4; Export / Import</button>
-      <button class="admin-tab" onclick="switchAdminTab('log')" id="tab-log">&#x1F4C4; Activity Log</button>
-      <button class="admin-tab admin-tab-manual" onclick="switchAdminTab('manual')" id="tab-manual">&#x1F4D6; Manual</button>
+      <button class="admin-tab active" onclick="switchAdminTab('dashboard')" id="tab-dashboard">&#x1F4CA; Overview</button>
+      <button class="admin-tab" onclick="switchAdminTab('guide')" id="tab-guide">&#x1F4D8; How to Edit</button>
     </div>
     <div id="adminContent"></div>
   </div>
@@ -2072,6 +2179,96 @@ var SEARCH_DATA = null;
 var EMBEDDED_DATA = null;
 var navStack = [];
 
+// --- Browser History Management ---
+// Prevents browser back button from closing the page.
+// Instead, back/forward navigates within the catalog hierarchy.
+var _historyPushing = false; // guard against recursive popstate during push
+
+function _storableNavStack() {
+  return navStack.map(function(s) {
+    if (s.type === 'home') return {type:'home'};
+    if (s.type === 'category') return {type:'category', path: s.path};
+    if (s.type === 'product') return {type:'product', path: s.path, name: s.name, no: s.no};
+    return s;
+  });
+}
+
+function pushNavHistory() {
+  if (_historyPushing) return;
+  var state = _storableNavStack();
+  var currentState = history.state;
+  if (currentState && JSON.stringify(currentState) === JSON.stringify(state)) return;
+  _historyPushing = true;
+  // If going back/shorter (e.g. UI Back button or breadcrumb), replace current
+  // history entry instead of pushing, so browser back continues working correctly.
+  if (currentState && Array.isArray(currentState) && currentState.length > navStack.length) {
+    history.replaceState(state, '');
+  } else {
+    history.pushState(state, '');
+  }
+  _historyPushing = false;
+}
+
+function _findNodeByPath(path) {
+  var parts = path.split('/');
+  var level = TREE_DATA;
+  var node = null;
+  for (var i = 0; i < parts.length; i++) {
+    var found = false;
+    for (var j = 0; j < level.length; j++) {
+      if (level[j].name === parts[i]) {
+        node = level[j];
+        level = node._children || [];
+        found = true;
+        break;
+      }
+    }
+    if (!found) return null;
+  }
+  return node;
+}
+
+function restoreNavFromState(state) {
+  if (!state || !Array.isArray(state)) return;
+  var newStack = [];
+  for (var i = 0; i < state.length; i++) {
+    var s = state[i];
+    if (s.type === 'home') {
+      newStack.push({type:'home'});
+    } else if (s.type === 'category') {
+      var node = _findNodeByPath(s.path);
+      if (!node) { console.warn('Category not found:', s.path); return false; }
+      newStack.push({type:'category', node: node, path: s.path, name: stripNum(node.name)});
+    } else if (s.type === 'product') {
+      newStack.push({type:'product', path: s.path, name: s.name, no: s.no});
+    }
+  }
+  navStack = newStack;
+  _historyPushing = true; // suppress push during restore
+  var last = navStack[navStack.length - 1];
+  if (!last || last.type === 'home') {
+    goHome(true);
+  } else if (last.type === 'category') {
+    setHomepageVisible(false);
+    renderCategory(last.node, last.path);
+  } else if (last.type === 'product') {
+    setHomepageVisible(false);
+    showProduct(last.path, last.name, last.no);
+  }
+  updateBreadcrumb();
+  _historyPushing = false;
+}
+
+window.addEventListener('popstate', function(e) {
+  if (e.state && Array.isArray(e.state)) {
+    restoreNavFromState(e.state);
+  } else {
+    // no state = user navigated directly to the page
+    navStack = [{type:'home'}];
+    goHome(true);
+  }
+});
+
 // ===== UTILS =====
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -2115,6 +2312,9 @@ var ADMIN_PAGE_SIZE = 50;
 var ADMIN_SEARCH_TERM = '';
 var ADMIN_CAT_FILTER = '';
 var ADMIN_FLAT_PRODUCTS = null; // cached flat product list
+// PRICE_MODE: when an authorized internal user unlocks, product tables show
+// seller columns (SKU/Brand/Price/URLs) inline. Session-only, never persisted.
+var PRICE_MODE = false;
 
 // ===== OVERRIDES (localStorage) =====
 var OVERRIDES_KEY = 'yod_admin_overrides';
@@ -2162,6 +2362,7 @@ function getMergedData() {
     var fileHidden = ov.hidden[fp] || {};
     var newRows = [];
     var newImgMap = {};
+    var newSMap = {};
     var newIdx = 0;
     for (var ri=0; ri<base.r.length; ri++) {
       if (fileHidden[ri]) continue;
@@ -2176,10 +2377,14 @@ function getMergedData() {
       if (base.i && base.i[ri] !== undefined) {
         newImgMap[newIdx] = base.i[ri];
       }
+      // re-index seller extra data (keeps pricing aligned with the row)
+      if (base.s && base.s[ri] !== undefined) {
+        newSMap[newIdx] = base.s[ri];
+      }
       newRows.push(row);
       newIdx++;
     }
-    merged[fp] = {h: base.h, r: newRows, i: newImgMap};
+    merged[fp] = {h: base.h, r: newRows, i: newImgMap, sh: base.sh || [], s: newSMap};
   }
   // Merge in admin-created products
   if (ov.created && ov.created.length > 0) {
@@ -2274,8 +2479,8 @@ function submitPw() {
 function verifyPwWithModal(hashHex) {
   if (hashHex === ADMIN_PASSWORD_HASH) {
     closePwModal();
-    adminUnlocked = true; ADMIN_CURRENT_TAB = 'dashboard';
-    addLog('login', 'Admin logged in');
+    adminUnlocked = true; PRICE_MODE = true; ADMIN_CURRENT_TAB = 'dashboard';
+    addLog('login', 'Internal user signed in — price mode ON');
     showAdminDashboard();
   } else { showPwError(); }
 }
@@ -2283,8 +2488,8 @@ function verifyPwWithModal(hashHex) {
 function verifyPwFallbackWithModal(pw) {
   if (pw === 'www666888') {
     closePwModal();
-    adminUnlocked = true; ADMIN_CURRENT_TAB = 'dashboard';
-    addLog('login', 'Admin logged in (fallback)');
+    adminUnlocked = true; PRICE_MODE = true; ADMIN_CURRENT_TAB = 'dashboard';
+    addLog('login', 'Internal user signed in (fallback) — price mode ON');
     showAdminDashboard();
   } else if (pw !== '') { showPwError(); }
 }
@@ -2391,11 +2596,8 @@ function switchAdminTab(tab) {
 function showAdminDashboard() {
   document.getElementById('adminOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
-  if (ADMIN_CURRENT_TAB === 'dashboard') renderDashboardTab();
-  else if (ADMIN_CURRENT_TAB === 'products') renderProductsTab();
-  else if (ADMIN_CURRENT_TAB === 'export') renderExportTab();
-  else if (ADMIN_CURRENT_TAB === 'log') renderLogTab();
-  else if (ADMIN_CURRENT_TAB === 'manual') renderManualTab();
+  if (ADMIN_CURRENT_TAB === 'guide') renderGuideTab();
+  else renderDashboardTab();
 }
 
 // ===== TAB: DASHBOARD =====
@@ -2422,106 +2624,76 @@ function renderDashboardTab() {
   }
   if (TREE_DATA) walkCats(TREE_DATA, 0);
 
-  var h = '<div class="admin-grid">'
+  var h = '<div class="price-banner">'
+    + '<div class="price-banner-icon">&#128176;</div>'
+    + '<div><div class="price-banner-title">Price Mode is ' + (PRICE_MODE ? 'ON' : 'OFF') + '</div>'
+    + '<div class="price-banner-sub">' + (PRICE_MODE
+        ? 'Every product table now shows SKU, Brand, <b>Price</b> and links inline — visible to you only. Public visitors never see these columns.'
+        : 'Pricing columns are hidden.') + '</div></div>'
+    + '<button class="price-banner-toggle" onclick="togglePriceMode()">' + (PRICE_MODE ? 'Turn Off' : 'Turn On') + '</button>'
+    + '</div>';
+
+  h += '<div class="admin-grid">'
     + '<div class="admin-stat"><div class="as-num">' + totalRows.toLocaleString() + '</div><div class="as-label">Total Products</div></div>'
     + '<div class="admin-stat"><div class="as-num">' + totalImgs.toLocaleString() + '</div><div class="as-label">Images Indexed</div></div>'
-    + '<div class="admin-stat"><div class="as-num">' + totalFiles.toLocaleString() + '</div><div class="as-label">Data Files</div></div>'
+    + '<div class="admin-stat"><div class="as-num">' + totalFiles.toLocaleString() + '</div><div class="as-label">Product Tables</div></div>'
     + '<div class="admin-stat"><div class="as-num">' + totalCats.toLocaleString() + '</div><div class="as-label">Categories</div></div>'
-    + '<div class="admin-stat"><div class="as-num">' + hiddenCount.toLocaleString() + '</div><div class="as-label">Hidden Products</div></div>'
-    + '<div class="admin-stat"><div class="as-num">' + editedCount.toLocaleString() + '</div><div class="as-label">Edited Products</div></div>'
-    + '<div class="admin-stat"><div class="as-num">' + createdCount.toLocaleString() + '</div><div class="as-label">Custom Products</div></div>'
-    + '</div>'
-    + '<div class="scan-trigger-bar">'
-    + '<button class="scan-trigger-btn" onclick="runSecurityScan()">'
-    + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>'
-    + ' Security Verification'
-    + '</button>'
-    + '<span class="scan-trigger-hint">Run a security scan to verify environment integrity</span>'
-    + '</div>'
-    + '<div class="admin-manual open" id="adminManual">'
-    + '<div class="admin-manual-head" onclick="toggleManual()">'
-    + '<h4>&#x1F4D6; Admin Hidden Operations Manual / &#x7BA1;&#x7406;&#x5458;&#x9690;&#x85CF;&#x64CD;&#x4F5C;&#x8BF4;&#x660E;&#x4E66;</h4>'
-    + '<span class="am-chevron">&#x25B2;</span>'
-    + '</div>'
-    + '<div class="admin-manual-body">'
-    // Item 1: Admin Entry
-    + '<div class="am-item">'
-    + '<div class="am-item-header"><span class="am-item-tag am-tag-click">&#x1F3AF; Click</span> 1. Admin Entry Point</div>'
-    + '<div class="am-item-trigger">Page Footer &rarr; &middot; dot &rarr; Password: www666888</div>'
-    + '<div class="am-item-desc">At the very bottom of every page, click the tiny <b>&middot;</b> dot (next to "Contact Us") to open the admin password panel. Enter the password to access the full admin dashboard.</div>'
-    + '<div class="am-item-note">The dot is deliberately small and unobtrusive — only visible to those who know it exists.</div>'
-    + '</div>'
-    // Item 2: Dashboard & Security Scan
-    + '<div class="am-item">'
-    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 2. Dashboard &amp; Security Verification</div>'
-    + '<div class="am-item-trigger">Admin Panel &rarr; Dashboard tab &rarr; [Security Verification] button</div>'
-    + '<div class="am-item-desc">The Dashboard shows live stats: total products, images, files, categories, hidden/edited/custom product counts, and a category breakdown. Click <b>Security Verification</b> to run a 2.5-second animated environment integrity scan.</div>'
-    + '</div>'
-    // Item 3: Product Manager
-    + '<div class="am-item">'
-    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 3. Product Manager (CRUD)</div>'
-    + '<div class="am-item-trigger">Admin Panel &rarr; Product Manager tab</div>'
-    + '<div class="am-item-desc"><b>Search</b> by name or SKU. <b>Edit</b> any product\'s name, SKU, brand, price, image URL, or category. <b>Hide/Show</b> any product from the public catalog. <b>Add custom products</b> not in the original data. All changes are stored in your browser\'s localStorage (key: <code>yod_admin_overrides</code>). Hidden products appear with a strikethrough in the admin view.</div>'
-    + '</div>'
-    // Item 4: Export/Import
-    + '<div class="am-item">'
-    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 4. Data Export &amp; Import</div>'
-    + '<div class="am-item-trigger">Admin Panel &rarr; Export/Import tab</div>'
-    + '<div class="am-item-desc"><b>Export Full Data:</b> download all product data as a single JSON file including overrides. <b>Export Overrides Only:</b> download only your edits/hidden/custom products as a portable backup. <b>Import Overrides:</b> restore edits from a previously exported backup JSON. <b>Reset All:</b> delete all admin changes and restore hidden products to full visibility.</div>'
-    + '<div class="am-item-note">Export first before resetting — reset is irreversible!</div>'
-    + '</div>'
-    // Item 5: Activity Log
-    + '<div class="am-item">'
-    + '<div class="am-item-header"><span class="am-item-tag am-tag-pass">&#x1F512; Password</span> 5. Activity Log (Audit Trail)</div>'
-    + '<div class="am-item-trigger">Admin Panel &rarr; Activity Log tab</div>'
-    + '<div class="am-item-desc">Records all admin actions with timestamps: logins, product edits, hide/show operations, security scans, data exports/imports, and resets. Use <b>Clear Log</b> to reset the log. Can <b>Copy as Table</b> for sharing or documentation.</div>'
-    + '</div>'
-    // Item 6: Source File Trace
-    + '<div class="am-item">'
-    + '<div class="am-item-header"><span class="am-item-tag am-tag-dblclick">&#x1F50D; Double-Click</span> 6. Source File Trace</div>'
-    + '<div class="am-item-trigger">Any product list page &rarr; Double-click Sheet# or product count &rarr; Password: www666888</div>'
-    + '<div class="am-item-desc">On any product listing page, <b>double-click</b> the <b>Sheet #</b> badge (top of page) or the <b>product count</b> text to reveal the original source Excel file path. This requires admin password verification (same as admin login). Once verified, the source path stays visible until page reload.</div>'
-    + '</div>'
-    // Item 7: Seller Version
-    + '<div class="am-item">'
-    + '<div class="am-item-header"><span class="am-item-tag am-tag-dblclick">&#x1F4CA; Click</span> 7. Seller Version Viewer (With Pricing)</div>'
-    + '<div class="am-item-trigger">Source Trace &rarr; [View Seller Version (with pricing)] button</div>'
-    + '<div class="am-item-desc">After revealing the source file via operation #6, click the <b>View Seller Version</b> button to open the corresponding seller Excel file in a modal. The seller version includes <b>pricing, SKU, brand, and page</b> columns that are hidden from the public buyer catalog. Parsed in-browser via SheetJS.</div>'
-    + '<div class="am-item-note">Seller files are stored in Organized_Products_V2/Organized_Excel_Seller/ — only accessible when running locally.</div>'
-    + '</div>'
-    // Summary
-    + '<div class="am-item" style="background:#fdfcfa; border-radius:8px; padding:14px; margin-top:4px; border:none;">'
-    + '<div class="am-item-header" style="color:#8b7e4a;">&#x1F510; Password Summary</div>'
-    + '<div class="am-item-desc">All admin operations use the same password: <code style="background:#fff; padding:3px 10px; border-radius:4px; font-weight:800; font-size:13px; border:1.5px solid #e7e3d4;">www666888</code><br>'
-    + 'Verification uses SHA-256 hash matching with plaintext fallback. Password is verified client-side only.</div>'
-    + '</div>'
-    + '</div>'
     + '</div>';
 
   if (TREE_DATA) {
+    h += '<h4 style="margin:18px 0 10px;font-size:14px;color:var(--text-heading);">Category Breakdown</h4>';
     h += '<table class="admin-table"><thead><tr><th>Category</th><th>Products</th><th>Share</th></tr></thead><tbody>';
     for (var j=0; j<catRows.length; j++) {
       var cr = catRows[j];
+      if (cr.depth > 1) continue; // keep the overview concise: top 2 levels
       h += '<tr><td style="padding-left:'+(cr.depth*16+12)+'px">' + esc(cr.name) + '</td>'
-        + '<td><span class="num">' + cr.total.toLocaleString() + '</span></td>'
+        + '<td>' + cr.total.toLocaleString() + '</td>'
         + '<td>' + cr.pct + '% <span class="as-bar-wrap"><span class="as-bar" style="width:'+Math.min(cr.pct*2.5,100)+'%"></span></span></td></tr>';
     }
     h += '</tbody></table>';
   }
-  h += '<p style="font-size:11px;color:var(--text-muted);margin-top:16px;text-align:right;">Data source: tree.json + products.json &middot; Updated 2026-06-25</p>';
 
   ac.innerHTML = h;
 }
 
-function toggleManual() {
-  var el = document.getElementById('adminManual');
-  if (el) {
-    if (el.classList.contains('open')) {
-      el.classList.remove('open');
-    } else {
-      el.classList.add('open');
-    }
-  }
+function togglePriceMode() {
+  PRICE_MODE = !PRICE_MODE;
+  addLog('login', 'Price mode ' + (PRICE_MODE ? 'ON' : 'OFF'));
+  renderDashboardTab();
+  toast(PRICE_MODE ? 'Price mode ON — reopen a product table to see pricing.' : 'Price mode OFF.');
+}
+
+// ===== TAB: HOW TO EDIT (guide) =====
+function renderGuideTab() {
+  var ac = document.getElementById('adminContent');
+  var h = '<div class="guide-wrap">';
+  h += '<p class="guide-lead">This public site is <b>read-only</b> by design (hosted on GitHub Pages — static files). '
+     + 'To actually add / move / edit products, categories or images, use the <b>local Admin Tool</b>, then publish.</p>';
+
+  h += '<div class="guide-step"><div class="guide-num">1</div><div>'
+     + '<div class="guide-h">Open the local Admin Tool</div>'
+     + '<div class="guide-d">On your computer, double-click <code>start_admin.bat</code>. It opens the full editor at <code>http://localhost:8888</code> where you can drag-reorganize categories, merge/split product tables, move products, edit names &amp; prices, and upload images.</div>'
+     + '</div></div>';
+
+  h += '<div class="guide-step"><div class="guide-num">2</div><div>'
+     + '<div class="guide-h">Make your changes</div>'
+     + '<div class="guide-d">All edits are saved to the data files with an automatic timestamped backup each time.</div>'
+     + '</div></div>';
+
+  h += '<div class="guide-step"><div class="guide-num">3</div><div>'
+     + '<div class="guide-h">Publish</div>'
+     + '<div class="guide-d">In the Admin Tool click <b>Publish to GitHub</b>. Within 1-2 minutes the public site updates for everyone.</div>'
+     + '</div></div>';
+
+  h += '<div class="guide-note"><b>This panel (on the public site)</b> is for <b>viewing internal info</b> only — pricing (Price Mode) and product source tracing. It intentionally cannot modify data, because a static web page cannot write files.</div>';
+
+  h += '<div class="guide-tips"><b>Also available here:</b><ul>'
+     + '<li><b>Price Mode</b> (Overview tab) — reveal SKU / Brand / Price columns inside every product table.</li>'
+     + '<li><b>Source trace</b> — double-click a product table title to see its source file path.</li>'
+     + '</ul></div>';
+
+  h += '</div>';
+  ac.innerHTML = h;
 }
 
 // ===== TAB: MANUAL =====
@@ -3386,7 +3558,7 @@ var catImageMap = {
     'HVAC Replacement Parts':             'images/ui/05HVAC Replacement Parts.jpg?v=20260630',
     'Condensate & Refrigeration':         'images/ui/06Condensate & Refrigeration.png?v=20260630',
     'Ventilation & Air Distribution':     'images/ui/07Ventilation & Air Distribution.png?v=20260630',
-    'Indoor Air Quality':                 'images/ui/08Indoor Air Quality.png?v=20260630',
+    'Indoor Air Quality':                 'images/ui/08Indoor Air Quality.png?v=20260701',
     'Boilers & Heating Parts':            'images/ui/09Boilers & Heating Parts.jpg?v=20260630',
     'Radiant & Hydronic Heating':         'images/ui/10Radiant & Hydronic Heating.jpg?v=20260630',
     'Gas & Burner Systems':               'images/ui/11Gas & Burner Systems.jpg?v=20260630',
@@ -3753,6 +3925,7 @@ function updateBreadcrumb() {
   }
   h += '<button class="btn-back ' + (navStack.length <= 1 ? 'hidden' : '') + '" id="btnBack" onclick="goBack()">&#8592; Back</button>';
   bc.innerHTML = h;
+  pushNavHistory();
 }
 
 function navigateBreadcrumb(idx) {
@@ -3828,20 +4001,23 @@ function renderCategory(node, parentPath) {
   var displayName = node._displayName || stripNum(node.name);
 
   var h = '<div class="sub-section-title">' + esc(displayName) + '</div>';
-  h += '<div class="sub-section-sub"><span class="num">' + (node.total || 0).toLocaleString() + '</span> products in this category</div>';
+  h += '<div class="sub-section-sub">' + (node.total || 0).toLocaleString() + ' products in this category</div>';
 
-  if (node._children && node._children.length > 0) {
-    // If node is a synthetic display category, sort children by total desc (主打在前)
-    var children = node._children.slice();
-    if (node._synthetic) {
-      children.sort(function(a,b){ return (b.total||0) - (a.total||0); });
-    }
+  // Unified card grid: subcategories AND product tables both render as cards.
+  var children = (node._children || []).slice();
+  if (node._synthetic) {
+    children.sort(function(a,b){ return (b.total||0) - (a.total||0); });
+  }
+  var files = node._files || [];
+
+  if (children.length > 0 || files.length > 0) {
     h += '<div class="cards-grid">';
+
+    // 1) Subcategory cards
     for (var i=0; i<children.length; i++) {
       var child = children[i];
       var childDisplay = child._displayName || stripNum(child.name);
       var childImg = catImageMap[childDisplay] || catRepImageMap[childDisplay] || getNodeImage(child);
-      // For synthetic nodes, store the index for lookup
       var onclick = node._synthetic
         ? 'navigateToChildByName(\'' + escAttr(child.name) + '\')'
         : 'navigateToChild(' + i + ')';
@@ -3853,33 +4029,44 @@ function renderCategory(node, parentPath) {
       }
       h += '<div class="cat-card-body">';
       h += '<div class="cat-card-name">' + esc(childDisplay) + '</div>';
-      h += '<div class="cat-card-meta">';
-      h += '<div class="cat-card-arrow">&#8594;</div>';
-      h += '</div>';
+      h += '<div class="cat-card-meta"><div class="cat-card-arrow">&#8594;</div></div>';
       h += '</div>';
       h += '</div>';
     }
-    h += '</div>';
-  }
 
-  if (node._files && node._files.length > 0) {
-    h += '<div class="file-list">';
-    h += '<h3 style="font-size:17px;font-weight:800;margin-bottom:16px;color:var(--text-heading);">Product Sheets</h3>';
-    for (var j=0; j<node._files.length; j++) {
-      var f = node._files[j];
-      h += '<div class="file-list-item" onclick="openProductFile(' + j + ')">';
-      h += '<div class="file-no">#' + f.no + '</div>';
-      h += '<div class="file-name">' + esc(f.name) + '</div>';
-      h += '<div class="file-badge">View Details &#8594;</div>';
-      h += '<div class="file-arrow">&#8250;</div>';
+    // 2) Product-table cards (leaf sheets) — same visual treatment as categories
+    for (var j=0; j<files.length; j++) {
+      var f = files[j];
+      var fImg = catImageMap[f.name] || catRepImageMap[f.name] || fileFirstImage(f.path);
+      h += '<div class="cat-card" onclick="openProductFile(' + j + ')">';
+      if (fImg) {
+        h += '<img class="cat-card-img" src="' + esc(fImg) + '" alt="' + escAttr(f.name) + '" loading="lazy">';
+      } else {
+        h += '<div class="cat-card-img placeholder">' + getCatIcon(f.name) + '</div>';
+      }
+      h += '<div class="cat-card-body">';
+      h += '<div class="cat-card-name">' + esc(f.name) + '</div>';
+      h += '<div class="cat-card-meta"><div class="cat-card-arrow">&#8594;</div></div>';
+      h += '</div>';
       h += '</div>';
     }
+
     h += '</div>';
   }
 
   window._navCtx = {node: node, path: parentPath};
   mc.innerHTML = h;
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// First product image for a single leaf table (for its card thumbnail)
+function fileFirstImage(fp) {
+  var edata = EMBEDDED_DATA[fp];
+  if (edata && edata.i) {
+    var keys = Object.keys(edata.i);
+    if (keys.length > 0) return edata.i[keys[0]];
+  }
+  return null;
 }
 
 function navigateToNode(idx) {
@@ -3932,12 +4119,12 @@ function showProduct(relPath, dispName, fileNo) {
   var merged = getMergedData();
   var embedded = merged[relPath];
   if (embedded && embedded.h && embedded.r) {
-    setTimeout(function(){ renderProductTable(mc, dispName, relPath, embedded.h, embedded.r, embedded.i || {}, fileNo); }, 30);
+    setTimeout(function(){ renderProductTable(mc, dispName, relPath, embedded.h, embedded.r, embedded.i || {}, fileNo, embedded.sh || [], embedded.s || {}); }, 30);
   } else {
     // fallback: try raw EMBEDDED_DATA
     var raw = EMBEDDED_DATA[relPath];
     if (raw && raw.h && raw.r) {
-      setTimeout(function(){ renderProductTable(mc, dispName, relPath, raw.h, raw.r, raw.i || {}, fileNo); }, 30);
+      setTimeout(function(){ renderProductTable(mc, dispName, relPath, raw.h, raw.r, raw.i || {}, fileNo, raw.sh || [], raw.s || {}); }, 30);
     } else {
       setTimeout(function(){
         parseXLSXFromFile(relPath, function(err, rows){
@@ -3969,9 +4156,12 @@ function parseXLSXFromFile(relPath, cb) {
   } catch(e) { cb(e); }
 }
 
-function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fileNo) {
+function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fileNo, sellerH, sellerMap) {
   fileNo = fileNo || '';
   imgMap = imgMap || {};
+  sellerH = sellerH || [];
+  sellerMap = sellerMap || {};
+  var priceMode = PRICE_MODE && sellerH.length > 0;
   var imgColIdx = -1;
   for (var ci=0; ci<headers.length; ci++) {
     if (String(headers[ci]).toLowerCase().trim() === 'image') { imgColIdx = ci; break; }
@@ -3987,13 +4177,27 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
       var v = dataRows[r][c] !== undefined ? dataRows[r][c] : '';
       var cls = c===0 ? ' class="col-num"' : '';
       var displayVal = esc(String(v));
-      if (/^-?[\d,.]+\.?\d*%?\s*$/.test(String(v).trim())) {
-        displayVal = '<span class="num">' + displayVal + '</span>';
-      }
       if (c === imgColIdx && imgMap[r] !== undefined) {
         tbodyHtml += '<td class="col-img"><img src="' + esc(imgMap[r]) + '" alt="product" loading="lazy"></td>';
       } else {
         tbodyHtml += '<td' + cls + '>' + displayVal + '</td>';
+      }
+    }
+    // Inline seller (price) columns — only in price mode
+    if (priceMode) {
+      var extra = sellerMap[r] || sellerMap[String(r)] || [];
+      for (var si=0; si<sellerH.length; si++) {
+        var sv = extra[si] !== undefined ? extra[si] : '';
+        var hdr = String(sellerH[si]).toLowerCase();
+        var cell;
+        if (hdr.indexOf('url') >= 0 && String(sv).indexOf('http') === 0) {
+          cell = '<a href="' + esc(String(sv)) + '" target="_blank" rel="noopener" style="color:var(--brand-blue);">link</a>';
+        } else if (hdr.indexOf('price') >= 0 && String(sv).trim() !== '') {
+          cell = '<span class="price-cell">$' + esc(String(sv)) + '</span>';
+        } else {
+          cell = esc(String(sv));
+        }
+        tbodyHtml += '<td class="col-seller">' + cell + '</td>';
       }
     }
     tbodyHtml += '<td class="col-action"><a href="javascript:void(0)" class="table-action-btn" onclick="openContact();return false" title="Inquire about this product">Learn More</a></td>';
@@ -4002,24 +4206,27 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
 
   var h = '<div class="product-table-wrap">';
   h += '<div class="product-table-header">';
-  h += '<div class="product-table-title">' + esc(dispName);
-  if (fileNo) {
-    h += ' <span class="product-table-pill" id="sheetPill" ondblclick="showSourceTrace(event)" title="Double-click for source info">Sheet #' + esc(String(fileNo)) + '</span>';
-  }
+  h += '<div class="product-table-title" ondblclick="showSourceTrace(event)" title="Double-click for source info">' + esc(dispName);
+  if (priceMode) h += ' <span class="price-mode-pill">&#128176; Price Mode</span>';
   h += '</div>';
-  h += '<div class="product-table-meta" ondblclick="showSourceTrace(event)" style="cursor:pointer" title="Double-click for source info"><span class="num">' + shownCount.toLocaleString() + '</span> products &nbsp;&middot;&nbsp; <span class="num">' + headers.length + '</span> columns</div>';
+  h += '<div class="product-table-meta" ondblclick="showSourceTrace(event)" style="cursor:pointer" title="Double-click for source info">' + shownCount.toLocaleString() + ' products</div>';
   h += '</div>';
   // Hidden: source file trace info
-  h += '<div class="src-trace" id="srcTrace"><strong>&#128448; Source File:</strong> ' + esc(relPath) + '<div class="src-trace-actions"><button class="src-btn src-btn-seller" onclick="showSellerVersion(event)" data-src="'+escAttr(relPath)+'">&#x1F4CA; View Seller Version (with pricing)</button><button class="src-btn src-btn-close" onclick="hideSourceTrace()">Close</button></div></div>';
+  h += '<div class="src-trace" id="srcTrace"><strong>&#128448; Source File:</strong> ' + esc(relPath) + '<div class="src-trace-actions"><button class="src-btn src-btn-close" onclick="hideSourceTrace()">Close</button></div></div>';
   h += '<div style="overflow-x:auto;"><table class="product-table"><thead><tr>';
   for (var hi=0; hi<headers.length; hi++) {
     var htxt = headers[hi] || ('Col ' + (hi+1));
     var thcls = hi===0 ? ' class="col-num"' : '';
     h += '<th' + thcls + '>' + esc(String(htxt)) + '</th>';
   }
+  if (priceMode) {
+    for (var shi=0; shi<sellerH.length; shi++) {
+      h += '<th class="col-seller">' + esc(String(sellerH[shi])) + '</th>';
+    }
+  }
   h += '<th class="col-action">Action</th>';
   h += '</tr></thead><tbody>' + tbodyHtml + '</tbody></table></div>';
-  h += '<div class="table-footer"><span><span class="num">' + shownCount.toLocaleString() + '</span> products shown</span></div>';
+  h += '<div class="table-footer"><span>' + shownCount.toLocaleString() + ' products shown</span></div>';
   h += '</div>';
 
   // Contact banner after product table
@@ -4106,6 +4313,10 @@ function submitSrcPw() {
 }
 
 // ===== SELLER VERSION VIEWER =====
+// Seller data (SKU/Brand/Price/Page/URLs) is now merged INTO products.json as
+// per-row `sh` (extra headers) + `s` (extra values by row position). This means
+// pricing follows a product wherever it is moved/merged/split — no dependency on
+// the original fixed Excel files anymore.
 var _sellerModalOpen = false;
 function showSellerVersion(e) {
   e.stopPropagation();
@@ -4113,16 +4324,19 @@ function showSellerVersion(e) {
   var srcPath = btn.getAttribute('data-src');
   if (!srcPath) return;
 
-  // Derive seller path: Organized_Products_V2/... -> Organized_Products_V2/Organized_Excel_Seller/Organized_Products_V2/...
-  var sellerPath = 'Organized_Products_V2/Organized_Excel_Seller/' + srcPath;
   document.getElementById('sellerModalTitle').innerHTML = '&#x1F4CA; Seller Version <span class="sm-badge">With Pricing</span>';
-  document.getElementById('sellerModalBody').innerHTML = '<div class="sm-loading"><div class="spinner"></div><div style="margin-top:14px;">Loading seller pricing data...</div></div>';
   document.getElementById('sellerModal').classList.add('show');
   _sellerModalOpen = true;
   document.body.style.overflow = 'hidden';
 
-  // Fetch and parse seller Excel
-  parseSellerXLSX(sellerPath);
+  var body = document.getElementById('sellerModalBody');
+  var merged = getMergedData();
+  var entry = (merged && merged[srcPath]) || (EMBEDDED_DATA && EMBEDDED_DATA[srcPath]);
+  if (!entry || !entry.r) {
+    body.innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; No data found for this table.</div>';
+    return;
+  }
+  renderSellerTable(body, entry);
 }
 
 function closeSellerModal() {
@@ -4131,46 +4345,16 @@ function closeSellerModal() {
   document.body.style.overflow = '';
 }
 
-function parseSellerXLSX(sellerPath) {
-  try {
-    var req = new XMLHttpRequest();
-    req.open('GET', sellerPath, true);
-    req.responseType = 'arraybuffer';
-    req.onload = function(){
-      var body = document.getElementById('sellerModalBody');
-      try {
-        var wb = XLSX.read(new Uint8Array(req.response), {type:'array'});
-        var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
-        if (!rows || rows.length < 2) {
-          body.innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Seller version file is empty or unreadable.</div>';
-          return;
-        }
-        renderSellerTable(body, rows);
-      } catch(e) {
-        body.innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Failed to parse seller file: ' + esc(e.message) + '</div>';
-      }
-    };
-    req.onerror = function(){
-      document.getElementById('sellerModalBody').innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Cannot load seller file. It may not exist at:<br><span style="font-family:monospace;font-size:11px;">' + esc(sellerPath) + '</span></div>';
-    };
-    req.send();
-  } catch(e) {
-    document.getElementById('sellerModalBody').innerHTML = '<div class="sm-loading" style="color:#e53e3e;">&#x26A0; Error: ' + esc(e.message) + '</div>';
-  }
-}
+function renderSellerTable(container, entry) {
+  // Combined headers = buyer headers (minus Image) + seller extra headers.
+  var buyerH = entry.h || ['#','Image','Product Name'];
+  var sellerH = entry.sh || [];
+  var rows = entry.r || [];
+  var imgMap = entry.i || {};
+  var sMap = entry.s || {};
 
-function renderSellerTable(container, rows) {
-  var headers = rows[0];
-  var dataRows = rows.slice(1);
-
-  // Filter out rows with empty first cell
-  var validRows = [];
-  for (var r = 0; r < dataRows.length; r++) {
-    var row = dataRows[r];
-    if (row && row.length > 0 && String(row[0]).trim() !== '') {
-      validRows.push(row);
-    }
-  }
+  // Build display header: #, Image, Product Name, then seller extras
+  var headers = buyerH.concat(sellerH);
 
   var h = '<table><thead><tr>';
   for (var hi = 0; hi < headers.length; hi++) {
@@ -4178,22 +4362,41 @@ function renderSellerTable(container, rows) {
   }
   h += '</tr></thead><tbody>';
 
-  for (var ri = 0; ri < validRows.length; ri++) {
-    var row = validRows[ri];
+  var shown = 0;
+  for (var ri = 0; ri < rows.length; ri++) {
+    var brow = rows[ri];
+    if (!brow) continue;
+    var extra = sMap[ri] || sMap[String(ri)] || [];
     h += '<tr>';
-    for (var ci = 0; ci < headers.length; ci++) {
-      var v = row[ci] !== undefined ? row[ci] : '';
-      var displayVal = esc(String(v));
-      // Style numeric values
-      if (/^-?[\d,.]+\.?\d*%?\s*$/.test(String(v).trim())) {
-        displayVal = '<span class="num">' + displayVal + '</span>';
+    // buyer columns
+    for (var bi = 0; bi < buyerH.length; bi++) {
+      if (String(buyerH[bi]).toLowerCase().trim() === 'image') {
+        var img = imgMap[ri] !== undefined ? imgMap[ri] : imgMap[String(ri)];
+        h += '<td>' + (img ? '<img src="' + esc(img) + '" style="width:44px;height:36px;object-fit:cover;border-radius:4px;">' : '') + '</td>';
+      } else {
+        var bv = brow[bi] !== undefined ? brow[bi] : '';
+        var bdisp = esc(String(bv));
+        if (/^-?[\d,.]+\.?\d*%?\s*$/.test(String(bv).trim())) bdisp = '<span class="num">' + bdisp + '</span>';
+        h += '<td>' + bdisp + '</td>';
       }
-      h += '<td>' + displayVal + '</td>';
+    }
+    // seller extra columns
+    for (var si = 0; si < sellerH.length; si++) {
+      var sv = extra[si] !== undefined ? extra[si] : '';
+      var sdisp = esc(String(sv));
+      var hdr = String(sellerH[si]).toLowerCase();
+      if (hdr.indexOf('url') >= 0 && String(sv).indexOf('http') === 0) {
+        sdisp = '<a href="' + esc(String(sv)) + '" target="_blank" rel="noopener" style="color:var(--brand-blue);">link</a>';
+      } else if (/^-?[\d,.]+\.?\d*%?\s*$/.test(String(sv).trim())) {
+        sdisp = '<span class="num">' + sdisp + '</span>';
+      }
+      h += '<td>' + sdisp + '</td>';
     }
     h += '</tr>';
+    shown++;
   }
   h += '</tbody></table>';
-  h += '<p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:16px;"><span class="num">' + validRows.length.toLocaleString() + '</span> products in seller catalog</p>';
+  h += '<p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:16px;"><span class="num">' + shown.toLocaleString() + '</span> products in seller catalog</p>';
 
   container.innerHTML = h;
 }

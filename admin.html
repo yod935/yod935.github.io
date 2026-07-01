@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOD Catalog Admin</title>
+<style>
+:root{
+  --bg:#f1f5f9; --card:#fff; --sidebar:#0f172a; --primary:#2563eb; --primary-light:#eff6ff;
+  --danger:#dc2626; --success:#16a34a; --warn:#d97706; --text:#1e293b; --text-muted:#64748b;
+  --border:#e2e8f0; --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:220px;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-logo{padding:20px 18px;font-size:17px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-logo span{color:#60a5fa;}
+.sidebar-nav{flex:1;padding:12px 0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;color:rgba(255,255,255,.6);font-size:14px;transition:all .15s;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(255,255,255,.04);color:rgba(255,255,255,.9);}
+.nav-item.active{background:rgba(37,99,235,.2);color:#fff;border-left-color:var(--primary);}
+.nav-icon{font-size:16px;width:22px;text-align:center;}
+.sidebar-foot{padding:12px 18px;font-size:11px;color:rgba(255,255,255,.35);border-top:1px solid rgba(255,255,255,.08);}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--card);border-bottom:1px solid var(--border);gap:12px;flex-shrink:0;flex-wrap:wrap;}
+.toolbar h2{font-size:18px;font-weight:700;}
+.toolbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.btn{padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--primary);color:#fff;} .btn-primary:hover{background:#1d4ed8;}
+.btn-danger{background:var(--danger);color:#fff;} .btn-danger:hover{background:#b91c1c;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);} .btn-outline:hover{background:#f8fafc;}
+.btn-success{background:var(--success);color:#fff;} .btn-success:hover{background:#15803d;}
+.btn-warn{background:var(--warn);color:#fff;} .btn-warn:hover{background:#b45309;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.content{flex:1;overflow-y:auto;padding:20px 24px;}
+/* two-pane category layout */
+.cat-layout{display:flex;gap:18px;align-items:flex-start;}
+.cat-tree-pane{flex:1;min-width:340px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;max-height:calc(100vh - 150px);overflow:auto;}
+.cat-detail-pane{width:420px;flex-shrink:0;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;max-height:calc(100vh - 150px);overflow:auto;}
+.hint{font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6;}
+/* tree */
+.tree-root{list-style:none;} .tree-node{list-style:none;}
+.tree-line{display:flex;align-items:center;gap:4px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:14px;user-select:none;border:1.5px solid transparent;}
+.tree-line:hover{background:var(--primary-light);}
+.tree-line.selected{background:#dbeafe;font-weight:600;border-color:#93c5fd;}
+.tree-line.drop-into{background:#dcfce7;border-color:#4ade80;}
+.tree-line.drop-before{border-top:2px solid var(--primary);}
+.tree-toggle{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);flex-shrink:0;cursor:pointer;}
+.tree-icon{font-size:13px;flex-shrink:0;}
+.tree-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tree-badge{font-size:10px;color:var(--text-muted);background:#f1f5f9;padding:1px 7px;border-radius:10px;flex-shrink:0;}
+.tree-badge.files{background:#eff6ff;color:var(--primary);}
+.tree-children{padding-left:18px;} .tree-children.collapsed{display:none;}
+/* detail pane */
+.detail-title{font-size:15px;font-weight:700;margin-bottom:4px;word-break:break-word;}
+.detail-sub{font-size:12px;color:var(--text-muted);margin-bottom:14px;}
+.detail-sec{margin-bottom:18px;}
+.detail-sec h4{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px;}
+.act-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.file-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:13px;cursor:grab;}
+.file-item:hover{background:#f8fafc;}
+.file-item.selected{background:#dbeafe;border-color:#93c5fd;}
+.file-item .fi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-item .fi-count{font-size:11px;color:var(--text-muted);}
+.file-chk{width:16px;height:16px;}
+/* ctx menu */
+.ctx-menu{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.14);z-index:9999;min-width:190px;padding:4px;display:none;}
+.ctx-menu.show{display:block;}
+.ctx-item{padding:8px 14px;font-size:13px;cursor:pointer;border-radius:5px;display:flex;align-items:center;gap:8px;}
+.ctx-item:hover{background:#f1f5f9;} .ctx-item.danger{color:var(--danger);}
+.ctx-sep{height:1px;background:var(--border);margin:4px 0;}
+/* product table */
+.table-wrap{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.table-controls{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center;}
+.table-controls input[type=text]{flex:1;min-width:200px;padding:7px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none;}
+.table-controls input[type=text]:focus{border-color:var(--primary);}
+.table-controls select{padding:7px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;background:#fff;max-width:320px;}
+.table-controls .count{font-size:13px;color:var(--text-muted);white-space:nowrap;}
+.virtual-scroll{max-height:calc(100vh - 240px);overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead{position:sticky;top:0;z-index:1;}
+th{background:#f8fafc;padding:10px 12px;text-align:left;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tr:hover td{background:#f8fafc;}
+.col-img{width:60px;} .col-img img{width:44px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;background:#f1f5f9;}
+.col-num{width:50px;color:var(--text-muted);font-size:12px;}
+.col-action{width:150px;text-align:right;white-space:nowrap;}
+.product-name{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+.product-name:hover{color:var(--primary);}
+.cat-cell{font-size:11px;color:var(--text-muted);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9998;display:none;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:640px;max-width:92vw;max-height:88vh;overflow-y:auto;animation:modalIn .2s ease;}
+.modal.wide{width:820px;}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(-10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-header h3{font-size:16px;font-weight:700;}
+.modal-close{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:20px;border-radius:6px;}
+.modal-close:hover{background:#f1f5f9;}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px;}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none;font-family:inherit;}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary);}
+.img-preview{width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:#f1f5f9;}
+.img-drop{border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;font-size:12px;color:var(--text-muted);cursor:pointer;}
+.img-drop.drag-over{border-color:var(--primary);background:var(--primary-light);}
+.split-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid #f1f5f9;font-size:13px;}
+.split-row img{width:36px;height:30px;object-fit:cover;border-radius:4px;background:#f1f5f9;}
+.split-row select{width:130px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;}
+.pub-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;}
+.pub-section h3{font-size:16px;margin-bottom:8px;}
+.pub-status{padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;display:none;white-space:pre-wrap;}
+.pub-status.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;display:block;}
+.pub-status.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;display:block;}
+.pub-status.loading{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;display:block;}
+.gs-list{font-family:monospace;font-size:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;max-height:220px;overflow:auto;white-space:pre;margin-top:10px;}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:600;z-index:10000;animation:toastIn .3s ease;max-width:400px;}
+.toast.success{background:var(--success);} .toast.error{background:var(--danger);} .toast.info{background:var(--primary);}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.loading{text-align:center;padding:40px;color:var(--text-muted);}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid #e2e8f0;border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:40px;color:var(--text-muted);font-size:13px;}
+/* ===== LOGIN GATE ===== */
+#login-gate{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#334155 100%);}
+#login-gate.hidden{display:none;}
+.lg-card{background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.4);width:380px;max-width:92%;
+  padding:40px 36px 32px;text-align:center;animation:modalIn .25s ease;}
+.lg-icon{width:60px;height:60px;border-radius:16px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 8px 24px rgba(37,99,235,.35);}
+.lg-icon svg{width:28px;height:28px;stroke:#fff;}
+.lg-card h2{font-size:19px;font-weight:800;color:#0f172a;margin-bottom:6px;}
+.lg-card p{font-size:13px;color:#64748b;margin-bottom:22px;}
+.lg-input{width:100%;height:46px;padding:0 16px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;
+  outline:none;box-sizing:border-box;transition:border-color .2s,box-shadow .2s;}
+.lg-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+.lg-btn{width:100%;height:46px;margin-top:14px;border:none;border-radius:10px;background:#2563eb;color:#fff;
+  font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;}
+.lg-btn:hover{background:#1d4ed8;}
+.lg-err{color:#dc2626;font-size:13px;min-height:20px;margin-top:10px;}
+.lg-card.shake{animation:lgShake .4s;}
+@keyframes lgShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+</style>
+</head>
+<body>
+<!-- ===== LOGIN GATE (password required before any admin access) ===== -->
+<div id="login-gate">
+  <div class="lg-card" id="lg-card">
+    <div class="lg-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    </div>
+    <h2>YOD 管理后台</h2>
+    <p>请输入管理员密码以继续</p>
+    <input type="password" id="lg-input" class="lg-input" placeholder="管理员密码" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')lgSubmit()">
+    <button class="lg-btn" onclick="lgSubmit()">进入后台</button>
+    <div class="lg-err" id="lg-err"></div>
+  </div>
+</div>
+<script>
+/* ===== ADMIN LOGIN GATE =====
+   Password is verified via SHA-256 (same hash as the public site's admin dot),
+   with a plaintext fallback. Unlock persists for this browser tab only
+   (sessionStorage) so closing the tab re-locks it. */
+var ADMIN_PW_HASH = 'c1bb3bf085bce603820ad7c4b7fa4fb6666e45544d899dfa13fe83669bc3e8c4';
+(function(){
+  if (sessionStorage.getItem('yod_admin_ok') === '1') {
+    document.getElementById('login-gate').classList.add('hidden');
+  } else {
+    document.body.style.overflow = 'hidden';
+    setTimeout(function(){ var i=document.getElementById('lg-input'); if(i) i.focus(); }, 200);
+  }
+})();
+function lgUnlock(){
+  sessionStorage.setItem('yod_admin_ok','1');
+  document.getElementById('login-gate').classList.add('hidden');
+  document.body.style.overflow='';
+}
+function lgFail(){
+  var c=document.getElementById('lg-card');
+  document.getElementById('lg-err').textContent='密码错误，请重试';
+  document.getElementById('lg-input').value='';
+  c.classList.add('shake'); setTimeout(function(){c.classList.remove('shake');},400);
+  document.getElementById('lg-input').focus();
+}
+function lgSubmit(){
+  var pw=document.getElementById('lg-input').value;
+  if(!pw){ document.getElementById('lg-err').textContent='请输入密码'; return; }
+  if(window.crypto && crypto.subtle){
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw)).then(function(buf){
+      var hex=Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+      if(hex===ADMIN_PW_HASH) lgUnlock(); else if(pw==='www666888') lgUnlock(); else lgFail();
+    }).catch(function(){ if(pw==='www666888') lgUnlock(); else lgFail(); });
+  } else {
+    if(pw==='www666888') lgUnlock(); else lgFail();
+  }
+}
+</script>
+<div class="sidebar">
+  <div class="sidebar-logo">YOD <span>Admin</span></div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" data-tab="tree"><span class="nav-icon">&#127795;</span> 分类 &amp; 表管理</div>
+    <div class="nav-item" data-tab="products"><span class="nav-icon">&#128230;</span> 产品管理</div>
+    <div class="nav-item" data-tab="publish"><span class="nav-icon">&#128640;</span> 发布到 GitHub</div>
+  </div>
+  <div class="sidebar-foot">直接编辑 data/*.json<br>改完记得点「发布」</div>
+</div>
+
+<div class="main">
+  <!-- ===== TAB: TREE ===== -->
+  <div class="toolbar" id="toolbar-tree">
+    <h2>分类 &amp; 表管理</h2>
+    <div class="toolbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="expandAll()">全部展开</button>
+      <button class="btn btn-outline btn-sm" onclick="collapseAll()">全部折叠</button>
+      <button class="btn btn-outline btn-sm" onclick="loadTree()">&#8635; 重新加载</button>
+    </div>
+  </div>
+  <div class="content" id="content-tree">
+    <div class="cat-layout">
+      <div class="cat-tree-pane">
+        <div class="hint">左键点击选中分类 &middot; 右键弹出菜单 &middot; <b>拖拽分类节点</b>可移动/改父级（拖到目标分类上=移入其内部）</div>
+        <div id="tree-container"><div class="loading"><div class="spinner"></div><br>加载分类中...</div></div>
+      </div>
+      <div class="cat-detail-pane" id="detail-pane">
+        <div class="empty">选中左侧一个分类查看详情<br>并管理它下面的产品表</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: PRODUCTS ===== -->
+  <div class="toolbar" id="toolbar-products" style="display:none;">
+    <h2>产品管理</h2>
+    <div class="toolbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="loadProducts()">&#8635; 重新加载</button>
+    </div>
+  </div>
+  <div class="content" id="content-products" style="display:none;">
+    <div class="table-wrap">
+      <div class="table-controls">
+        <input type="text" id="prod-search" placeholder="按产品名搜索..." oninput="filterProducts()">
+        <select id="prod-cat-filter" onchange="filterProducts()"><option value="">全部产品表</option></select>
+        <span class="count" id="prod-count"></span>
+      </div>
+      <div class="virtual-scroll" id="prod-table-wrap">
+        <table>
+          <thead><tr>
+            <th class="col-num">#</th><th class="col-img">图片</th><th>产品名</th>
+            <th>所在表</th><th class="col-action">操作</th>
+          </tr></thead>
+          <tbody id="prod-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: PUBLISH ===== -->
+  <div class="toolbar" id="toolbar-publish" style="display:none;">
+    <h2>发布到 GitHub</h2>
+  </div>
+  <div class="content" id="content-publish" style="display:none;">
+    <div class="pub-section">
+      <h3>&#128640; 发布改动</h3>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">将会：重建搜索索引 &rarr; git add &rarr; commit &rarr; push origin main。首次推送可能弹出 GitHub 登录窗口，授权一次后即免密。</p>
+      <div class="form-group"><label>提交信息</label>
+        <input type="text" id="pub-message" value="Update from admin panel" placeholder="描述本次改动..."></div>
+      <button class="btn btn-success" onclick="doPublish()" id="pub-btn">&#128640; 立即发布</button>
+      <button class="btn btn-outline" onclick="checkGitStatus()">查看 Git 状态</button>
+      <div class="pub-status" id="pub-status"></div>
+      <div class="gs-list" id="gs-list" style="display:none;"></div>
+    </div>
+    <div class="pub-section" style="margin-top:16px;">
+      <h3>&#128295; 维护</h3>
+      <div class="act-row" style="margin-top:10px;">
+        <button class="btn btn-outline" onclick="rebuildSearch()">&#8635; 重建搜索索引</button>
+        <button class="btn btn-outline" onclick="doBackup()">&#128190; 创建备份</button>
+      </div>
+      <p style="color:var(--text-muted);font-size:12px;margin-top:10px;">每次改动都会自动创建带时间戳的备份到 data_backup/。发布前会自动重建搜索索引。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="ctx-menu" id="ctx-menu"></div>
+
+<!-- Generic Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" id="modal-box">
+    <div class="modal-header"><h3 id="modal-title">标题</h3><button class="modal-close" onclick="closeModal()">&#10005;</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- Image preview -->
+<div class="modal-overlay" id="img-modal" onclick="this.classList.remove('show')">
+  <img id="img-modal-img" style="max-width:90vw;max-height:85vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+</div>
+
+<script>
+/* =========================================================
+   STATE
+   ========================================================= */
+var treeData = [];
+var selPath = null;          // 选中分类的索引路径, e.g. [0,2]
+var selFileIdx = null;       // 选中的表在该分类 _files 中的下标
+var productList = [];
+var filteredProducts = [];
+var activeTab = 'tree';
+var ctxTarget = null;        // {path, fileIdx?}
+var dragPath = null;         // 正在拖拽的分类索引路径
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,type){var t=document.createElement('div');t.className='toast '+(type||'info');t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove();},300);},2600);}
+function api(url,opts){return fetch(url,opts).then(function(r){return r.json().then(function(j){if(!r.ok||j.error)throw new Error(j.error||('HTTP '+r.status));return j;});});}
+function apiPost(url,body){return api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});}
+function pathEq(a,b){return a&&b&&a.length===b.length&&a.every(function(v,i){return v===b[i];});}
+function isPrefix(pre,full){return pre.length<=full.length&&pre.every(function(v,i){return v===full[i];});}
+
+/* node lookup by index path */
+function nodeAt(path){
+  var list=treeData, node=null;
+  for(var i=0;i<path.length;i++){ if(!list||path[i]>=list.length)return null; node=list[path[i]]; list=node._children||[]; }
+  return node;
+}
+function displayName(n){return n._displayName||stripNum(n.name);}
+function stripNum(s){return String(s||'').replace(/^\d+_/,'');}
+
+/* =========================================================
+   TAB SWITCH
+   ========================================================= */
+document.querySelectorAll('.nav-item').forEach(function(el){el.addEventListener('click',function(){switchTab(this.dataset.tab);});});
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.nav-item').forEach(function(el){el.classList.toggle('active',el.dataset.tab===tab);});
+  ['tree','products','publish'].forEach(function(t){
+    document.getElementById('toolbar-'+t).style.display = t===tab?'flex':'none';
+    document.getElementById('content-'+t).style.display = t===tab?'block':'none';
+  });
+  if(tab==='products') loadProducts();
+}
+
+/* =========================================================
+   TREE RENDER
+   ========================================================= */
+var collapsed = {}; // key = path.join('.') -> true
+function loadTree(){
+  api('/api/tree').then(function(d){treeData=d;renderTree();if(selPath){var n=nodeAt(selPath);if(n)renderDetail();else clearDetail();}}).catch(function(e){toast('加载失败: '+e.message,'error');});
+}
+function renderTree(){
+  var c=document.getElementById('tree-container');
+  if(!treeData.length){c.innerHTML='<div class="empty">没有分类</div>';return;}
+  var html='<ul class="tree-root">';
+  for(var i=0;i<treeData.length;i++) html+=renderNode(treeData[i],[i]);
+  html+='</ul>';
+  c.innerHTML=html;
+  bindTreeEvents();
+}
+function renderNode(node,path){
+  var key=path.join('.');
+  var kids=node._children||[];
+  var files=node._files||[];
+  var hasKids=kids.length>0;
+  var isColl=collapsed[key];
+  var sel=pathEq(path,selPath)?' selected':'';
+  var h='<li class="tree-node">';
+  h+='<div class="tree-line'+sel+'" draggable="true" data-path="'+key+'">';
+  h+='<span class="tree-toggle" data-toggle="'+key+'">'+(hasKids?(isColl?'&#9654;':'&#9660;'):'')+'</span>';
+  h+='<span class="tree-icon">'+(hasKids?'&#128193;':'&#128196;')+'</span>';
+  h+='<span class="tree-name">'+esc(displayName(node))+'</span>';
+  if(files.length) h+='<span class="tree-badge files">'+files.length+'表</span>';
+  h+='<span class="tree-badge">'+(node.total||0)+'</span>';
+  h+='</div>';
+  if(hasKids){
+    h+='<ul class="tree-children'+(isColl?' collapsed':'')+'">';
+    for(var i=0;i<kids.length;i++) h+=renderNode(kids[i],path.concat(i));
+    h+='</ul>';
+  }
+  h+='</li>';
+  return h;
+}
+function bindTreeEvents(){
+  document.querySelectorAll('.tree-toggle[data-toggle]').forEach(function(el){
+    el.addEventListener('click',function(e){e.stopPropagation();var k=this.dataset.toggle;collapsed[k]=!collapsed[k];renderTree();});
+  });
+  document.querySelectorAll('.tree-line').forEach(function(el){
+    var path=el.dataset.path.split('.').map(Number);
+    el.addEventListener('click',function(e){selPath=path;selFileIdx=null;renderTree();renderDetail();});
+    el.addEventListener('contextmenu',function(e){e.preventDefault();selPath=path;selFileIdx=null;renderTree();renderDetail();showCtx(e,path);});
+    // drag
+    el.addEventListener('dragstart',function(e){dragPath=path;e.dataTransfer.effectAllowed='move';});
+    el.addEventListener('dragover',function(e){e.preventDefault();this.classList.add('drop-into');});
+    el.addEventListener('dragleave',function(e){this.classList.remove('drop-into');});
+    el.addEventListener('drop',function(e){e.preventDefault();this.classList.remove('drop-into');onTreeDrop(path);});
+  });
+}
+function onTreeDrop(targetPath){
+  if(!dragPath){return;}
+  if(pathEq(dragPath,targetPath)){dragPath=null;return;}
+  if(isPrefix(dragPath,targetPath)){toast('不能把分类移动到它自己的子孙里','error');dragPath=null;return;}
+  var src=dragPath; dragPath=null;
+  apiPost('/api/tree/move',{path:src,newParent:targetPath}).then(function(){
+    toast('已移动分类','success');selPath=null;clearDetail();loadTree();
+  }).catch(function(e){toast('移动失败: '+e.message,'error');});
+}
+function expandAll(){collapsed={};renderTree();}
+function collapseAll(){
+  (function walk(list,path){for(var i=0;i<list.length;i++){var n=list[i];if(n._children&&n._children.length){collapsed[path.concat(i).join('.')]=true;walk(n._children,path.concat(i));}}})(treeData,[]);
+  renderTree();
+}
+
+/* =========================================================
+   CONTEXT MENU
+   ========================================================= */
+function showCtx(e,path){
+  ctxTarget={path:path};
+  var m=document.getElementById('ctx-menu');
+  var items=[
+    ['&#10133; 新增子分类','ctxAddChild'],
+    ['&#9998; 重命名','ctxRename'],
+    ['&#128194; 新建产品表','ctxCreateTable'],
+    ['sep'],
+    ['&#128260; 合并进另一个分类','ctxMerge'],
+    ['sep'],
+    ['danger|&#128465; 删除分类','ctxDelete']
+  ];
+  var h='';
+  items.forEach(function(it){
+    if(it[0]==='sep'){h+='<div class="ctx-sep"></div>';return;}
+    var label=it[0],cls='ctx-item';
+    if(label.indexOf('danger|')===0){cls+=' danger';label=label.slice(7);}
+    h+='<div class="'+cls+'" onclick="'+it[1]+'()">'+label+'</div>';
+  });
+  m.innerHTML=h;m.classList.add('show');
+  var x=Math.min(e.clientX,window.innerWidth-210),y=Math.min(e.clientY,window.innerHeight-260);
+  m.style.left=x+'px';m.style.top=y+'px';
+}
+document.addEventListener('click',function(e){if(!e.target.closest('#ctx-menu'))document.getElementById('ctx-menu').classList.remove('show');});
+
+function ctxAddChild(){
+  var name=prompt('新子分类名称:');if(!name)return;
+  apiPost('/api/tree/add',{parent:ctxTarget.path,name:name}).then(function(){toast('已新增','success');loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function ctxRename(){
+  var n=nodeAt(ctxTarget.path);var name=prompt('重命名分类:',displayName(n));if(!name)return;
+  apiPost('/api/tree/rename',{path:ctxTarget.path,name:name}).then(function(){toast('已重命名','success');loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function ctxCreateTable(){
+  var name=prompt('新产品表名称:');if(!name)return;
+  apiPost('/api/table/create',{path:ctxTarget.path,name:name}).then(function(){toast('已创建表','success');loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function ctxDelete(){
+  var n=nodeAt(ctxTarget.path);
+  var hasContent=(n._children&&n._children.length)||(n._files&&n._files.length);
+  var msg=hasContent?'该分类非空！删除将连同其下所有子分类和产品表一并删除，确定？':'确定删除该分类？';
+  if(!confirm(msg))return;
+  apiPost('/api/tree/delete',{path:ctxTarget.path,force:hasContent}).then(function(){toast('已删除','success');selPath=null;clearDetail();loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function ctxMerge(){ openMergeCategoryModal(ctxTarget.path); }
+
+/* =========================================================
+   DETAIL PANE (selected category)
+   ========================================================= */
+function clearDetail(){document.getElementById('detail-pane').innerHTML='<div class="empty">选中左侧一个分类查看详情</div>';selPath=null;}
+function renderDetail(){
+  var n=nodeAt(selPath);if(!n){clearDetail();return;}
+  var files=n._files||[];
+  var kids=n._children||[];
+  var p=document.getElementById('detail-pane');
+  var h='<div class="detail-title">'+esc(displayName(n))+'</div>';
+  h+='<div class="detail-sub">路径深度 '+selPath.length+' &middot; '+(n.total||0)+' 个产品 &middot; '+kids.length+' 子分类 &middot; '+files.length+' 产品表</div>';
+
+  h+='<div class="detail-sec"><h4>分类操作</h4><div class="act-row">';
+  h+='<button class="btn btn-outline btn-sm" onclick="ctxTarget={path:selPath};ctxRename()">重命名</button>';
+  h+='<button class="btn btn-outline btn-sm" onclick="ctxTarget={path:selPath};ctxAddChild()">新增子分类</button>';
+  h+='<button class="btn btn-outline btn-sm" onclick="ctxTarget={path:selPath};ctxCreateTable()">新建产品表</button>';
+  h+='<button class="btn btn-outline btn-sm" onclick="openMergeCategoryModal(selPath)">合并到...</button>';
+  h+='<button class="btn btn-danger btn-sm" onclick="ctxTarget={path:selPath};ctxDelete()">删除</button>';
+  h+='</div></div>';
+
+  h+='<div class="detail-sec"><h4>产品表 ('+files.length+')</h4>';
+  h+='<div class="hint">勾选多个表可<b>合并</b>；单个表可<b>移动/拆分/改名/删除</b>。点表名进入产品管理。</div>';
+  if(files.length){
+    for(var i=0;i<files.length;i++){
+      var f=files[i];
+      h+='<div class="file-item" data-fi="'+i+'">';
+      h+='<input type="checkbox" class="file-chk" data-fi="'+i+'">';
+      h+='<span class="fi-name" onclick="gotoTableProducts(\''+esc(f.path).replace(/'/g,"\\'")+'\')" title="'+esc(f.name)+'">'+esc(f.name)+'</span>';
+      h+='<span class="fi-count">#'+f.no+'</span>';
+      h+='<button class="btn btn-outline btn-sm" onclick="openTableActions('+i+')">&#8942;</button>';
+      h+='</div>';
+    }
+    h+='<div class="act-row" style="margin-top:10px;">';
+    h+='<button class="btn btn-primary btn-sm" onclick="mergeSelectedTables()">合并勾选的表</button>';
+    h+='</div>';
+  }else{
+    h+='<div class="empty" style="padding:16px;">该分类下没有产品表</div>';
+  }
+  h+='</div>';
+  p.innerHTML=h;
+}
+function gotoTableProducts(path){
+  switchTab('products');
+  setTimeout(function(){
+    var sel=document.getElementById('prod-cat-filter');
+    sel.value=path; filterProducts();
+  },400);
+}
+
+/* table single actions */
+function openTableActions(fi){
+  var n=nodeAt(selPath);var f=n._files[fi];
+  showModal('产品表操作：'+esc(f.name),
+    '<div class="act-row">'+
+      '<button class="btn btn-outline" onclick="tblRename('+fi+')">重命名</button>'+
+      '<button class="btn btn-outline" onclick="tblMove('+fi+')">移动到其它分类</button>'+
+      '<button class="btn btn-outline" onclick="tblSplit('+fi+')">拆分此表</button>'+
+      '<button class="btn btn-danger" onclick="tblDelete('+fi+')">删除此表</button>'+
+    '</div>', '');
+}
+function tblRename(fi){
+  var n=nodeAt(selPath);var f=n._files[fi];var name=prompt('重命名产品表:',f.name);if(!name)return;
+  apiPost('/api/table/rename',{path:selPath,fileIndex:fi,name:name}).then(function(){toast('已重命名','success');closeModal();loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function tblDelete(fi){
+  var n=nodeAt(selPath);var f=n._files[fi];
+  if(!confirm('删除产品表「'+f.name+'」及其所有产品？'))return;
+  apiPost('/api/table/delete',{path:selPath,fileIndex:fi}).then(function(){toast('已删除','success');closeModal();loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function tblMove(fi){ openMoveTableModal(selPath,fi); }
+function tblSplit(fi){ openSplitTableModal(selPath,fi); }
+
+function mergeSelectedTables(){
+  var idxs=[];document.querySelectorAll('.file-chk:checked').forEach(function(c){idxs.push(Number(c.dataset.fi));});
+  if(idxs.length<2){toast('请勾选至少两个表','error');return;}
+  var n=nodeAt(selPath);
+  var name=prompt('合并后的表名称:',n._files[idxs[0]].name);if(!name)return;
+  apiPost('/api/table/merge',{path:selPath,fileIndexes:idxs,name:name,keepFirst:true}).then(function(){toast('已合并 '+idxs.length+' 个表','success');loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+
+/* =========================================================
+   MODALS: move table / merge category / split table
+   ========================================================= */
+function buildCategoryOptions(excludePath){
+  // flat list of all categories as index paths
+  var opts=[];
+  (function walk(list,path,prefix){
+    for(var i=0;i<list.length;i++){
+      var n=list[i];var p=path.concat(i);
+      if(!(excludePath&&isPrefix(excludePath,p))){
+        opts.push({path:p,label:prefix+displayName(n)});
+      }
+      if(n._children&&n._children.length) walk(n._children,p,prefix+'　');
+    }
+  })(treeData,[],'');
+  return opts;
+}
+function openMoveTableModal(fromPath,fi){
+  var opts=buildCategoryOptions(null);
+  var sel='<select id="mv-target">';
+  opts.forEach(function(o){ if(!pathEq(o.path,fromPath)) sel+='<option value="'+o.path.join('.')+'">'+esc(o.label)+'</option>'; });
+  sel+='</select>';
+  showModal('移动产品表到...','<div class="form-group"><label>目标分类</label>'+sel+'</div>',
+    '<button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmMoveTable('+fi+')">移动</button>');
+}
+function confirmMoveTable(fi){
+  var to=document.getElementById('mv-target').value.split('.').map(Number);
+  apiPost('/api/table/move',{fromPath:selPath,toPath:to,fileIndex:fi}).then(function(){toast('已移动表','success');closeModal();loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function openMergeCategoryModal(srcPath){
+  var opts=buildCategoryOptions(srcPath);
+  var sel='<select id="mg-target">';
+  opts.forEach(function(o){ sel+='<option value="'+o.path.join('.')+'">'+esc(o.label)+'</option>'; });
+  sel+='</select>';
+  var n=nodeAt(srcPath);
+  showModal('合并分类','<p style="font-size:13px;margin-bottom:12px;">把「<b>'+esc(displayName(n))+'</b>」的所有子分类和产品表并入下面选中的分类，然后删除本分类。</p><div class="form-group"><label>目标分类</label>'+sel+'</div>',
+    '<button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-warn" onclick="confirmMergeCategory('+JSON.stringify(srcPath)+')">合并</button>');
+}
+function confirmMergeCategory(srcPath){
+  var tgt=document.getElementById('mg-target').value.split('.').map(Number);
+  apiPost('/api/tree/merge',{source:srcPath,target:tgt}).then(function(){toast('已合并','success');closeModal();selPath=null;clearDetail();loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+function openSplitTableModal(path,fi){
+  var n=nodeAt(path);var f=n._files[fi];
+  api('/api/table/rows?filepath='+encodeURIComponent(f.path)).then(function(d){
+    var rows=d.rows;
+    if(!rows.length){toast('该表没有产品','error');return;}
+    var h='<p style="font-size:13px;margin-bottom:10px;">给每一行分配一个目标组。留在「原表」的行不动，每个新组名会生成一个新表。</p>';
+    h+='<div class="form-group"><label>新组名称（逗号分隔，可留空后用下拉逐行分配）</label><input type="text" id="sp-groups" placeholder="例如: A类, B类" oninput="rebuildSplitSelects()"></div>';
+    h+='<div id="sp-rows" style="max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:8px;">';
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i];
+      h+='<div class="split-row"><span style="width:34px;color:var(--text-muted);">'+r.num+'</span>';
+      h+=(r.image?'<img src="/'+esc(r.image)+'">':'<span style="width:36px;">&nbsp;</span>');
+      h+='<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(r.name)+'</span>';
+      h+='<select class="sp-sel" data-pos="'+r.pos+'"><option value="">原表</option></select></div>';
+    }
+    h+='</div>';
+    showModal('拆分产品表：'+esc(f.name),h,
+      '<button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmSplit('+JSON.stringify(path)+','+fi+')">执行拆分</button>','wide');
+    document.getElementById('modal-box').dataset.splitFile=f.path;
+  }).catch(function(e){toast(e.message,'error');});
+}
+function rebuildSplitSelects(){
+  var groups=document.getElementById('sp-groups').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  document.querySelectorAll('.sp-sel').forEach(function(sel){
+    var cur=sel.value;
+    var h='<option value="">原表</option>';
+    groups.forEach(function(g){h+='<option value="'+esc(g)+'"'+(g===cur?' selected':'')+'>'+esc(g)+'</option>';});
+    sel.innerHTML=h;
+  });
+}
+function confirmSplit(path,fi){
+  var groupsMap={};
+  document.querySelectorAll('.sp-sel').forEach(function(sel){
+    var g=sel.value;if(!g)return;
+    if(!groupsMap[g])groupsMap[g]=[];
+    groupsMap[g].push(Number(sel.dataset.pos));
+  });
+  var groups=Object.keys(groupsMap).map(function(g){return {name:g,rows:groupsMap[g]};});
+  if(!groups.length){toast('没有任何行被分配到新组','error');return;}
+  apiPost('/api/table/split',{path:path,fileIndex:fi,groups:groups}).then(function(d){toast('已拆分出 '+d.created.length+' 个新表','success');closeModal();loadTree();}).catch(function(e){toast(e.message,'error');});
+}
+
+/* =========================================================
+   GENERIC MODAL
+   ========================================================= */
+function showModal(title,body,footer,cls){
+  document.getElementById('modal-title').innerHTML=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal-footer').innerHTML=footer||'<button class="btn btn-outline" onclick="closeModal()">关闭</button>';
+  document.getElementById('modal-box').className='modal'+(cls?(' '+cls):'');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+
+/* =========================================================
+   PRODUCT MANAGER
+   ========================================================= */
+function loadProducts(){
+  document.getElementById('prod-table').innerHTML='<tr><td colspan="5"><div class="loading"><div class="spinner"></div><br>加载产品中...</div></td></tr>';
+  api('/api/products').then(function(d){
+    productList=d.products;
+    // build category(table) filter from tree file paths -> name
+    buildTableFilter();
+    filterProducts();
+  }).catch(function(e){toast(e.message,'error');});
+}
+var pathToName={};
+function buildTableFilter(){
+  pathToName={};
+  api('/api/tree').then(function(tree){
+    (function walk(list,crumb){
+      for(var i=0;i<list.length;i++){
+        var n=list[i];var name=n._displayName||stripNum(n.name);var c=crumb.concat(name);
+        (n._files||[]).forEach(function(f){pathToName[f.path]={name:f.name,crumb:c.join(' > ')};});
+        if(n._children)walk(n._children,c);
+      }
+    })(tree,[]);
+    var sel=document.getElementById('prod-cat-filter');
+    var cur=sel.value;
+    var opts='<option value="">全部产品表</option>';
+    Object.keys(pathToName).sort(function(a,b){return pathToName[a].crumb.localeCompare(pathToName[b].crumb);}).forEach(function(p){
+      opts+='<option value="'+esc(p)+'">'+esc(pathToName[p].crumb)+'</option>';
+    });
+    sel.innerHTML=opts;sel.value=cur;
+    renderProducts();
+  });
+}
+function filterProducts(){
+  var q=(document.getElementById('prod-search').value||'').toLowerCase();
+  var cat=document.getElementById('prod-cat-filter').value;
+  filteredProducts=productList.filter(function(p){
+    if(cat&&p.filepath!==cat)return false;
+    if(q&&p.name.toLowerCase().indexOf(q)<0)return false;
+    return true;
+  });
+  renderProducts();
+}
+function renderProducts(){
+  var tb=document.getElementById('prod-table');
+  document.getElementById('prod-count').textContent=filteredProducts.length+' / '+productList.length;
+  if(!filteredProducts.length){tb.innerHTML='<tr><td colspan="5"><div class="empty">没有匹配的产品</div></td></tr>';return;}
+  var show=filteredProducts.slice(0,600);
+  var h='';
+  for(var i=0;i<show.length;i++){
+    var p=show[i];var info=pathToName[p.filepath]||{name:p.filepath,crumb:p.filepath};
+    h+='<tr>';
+    h+='<td class="col-num">'+esc(p.num)+'</td>';
+    h+='<td class="col-img">'+(p.image?'<img src="/'+esc(p.image)+'" onclick="previewImg(\''+esc(p.image)+'\')">':'')+'</td>';
+    h+='<td class="product-name" onclick="editProduct('+i+')" title="'+esc(p.name)+'">'+esc(p.name)+'</td>';
+    h+='<td class="cat-cell" title="'+esc(info.crumb)+'">'+esc(info.name)+'</td>';
+    h+='<td class="col-action">';
+    h+='<button class="btn btn-outline btn-sm" onclick="editProduct('+i+')">编辑</button> ';
+    h+='<button class="btn btn-outline btn-sm" onclick="moveProduct('+i+')">移动</button> ';
+    h+='<button class="btn btn-danger btn-sm" onclick="delProduct('+i+')">删</button>';
+    h+='</td></tr>';
+  }
+  if(filteredProducts.length>600) h+='<tr><td colspan="5"><div class="empty">仅显示前 600 条，请用搜索/筛选缩小范围</div></td></tr>';
+  tb.innerHTML=h;
+}
+function previewImg(src){document.getElementById('img-modal-img').src='/'+src;document.getElementById('img-modal').classList.add('show');}
+
+function editProduct(i){
+  var p=filteredProducts[i];
+  var extraKeys=Object.keys(p).filter(function(k){return ['filepath','pos','num','image','name'].indexOf(k)<0;});
+  var h='<div class="form-group"><label>产品名</label><input type="text" id="ep-name" value="'+esc(p.name)+'"></div>';
+  h+='<div class="form-group"><label>图片路径</label><input type="text" id="ep-image" value="'+esc(p.image)+'"></div>';
+  h+='<div class="form-row" style="display:flex;gap:12px;align-items:center;">';
+  h+='<img class="img-preview" id="ep-preview" src="'+(p.image?'/'+esc(p.image):'')+'">';
+  h+='<div class="img-drop" id="ep-drop" style="flex:1;">拖拽图片到此上传，或点击选择</div>';
+  h+='<input type="file" id="ep-file" accept="image/*" style="display:none;">';
+  h+='</div>';
+  extraKeys.forEach(function(k){
+    h+='<div class="form-group"><label>'+esc(k)+'</label><input type="text" data-col="'+esc(k)+'" class="ep-extra" value="'+esc(p[k])+'"></div>';
+  });
+  showModal('编辑产品',h,'<button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveProduct('+i+')">保存</button>');
+  setupImgUpload('ep-drop','ep-file','ep-image','ep-preview');
+}
+function saveProduct(i){
+  var p=filteredProducts[i];
+  var changes={name:document.getElementById('ep-name').value,image:document.getElementById('ep-image').value};
+  document.querySelectorAll('.ep-extra').forEach(function(el){changes[el.dataset.col]=el.value;});
+  apiPost('/api/product/update',{filepath:p.filepath,pos:p.pos,changes:changes}).then(function(){toast('已保存','success');closeModal();loadProducts();}).catch(function(e){toast(e.message,'error');});
+}
+function delProduct(i){
+  var p=filteredProducts[i];if(!confirm('删除产品「'+p.name+'」？'))return;
+  apiPost('/api/product/delete',{filepath:p.filepath,pos:p.pos}).then(function(){toast('已删除','success');loadProducts();}).catch(function(e){toast(e.message,'error');});
+}
+function moveProduct(i){
+  var p=filteredProducts[i];
+  var sel='<select id="mp-target">';
+  Object.keys(pathToName).sort(function(a,b){return pathToName[a].crumb.localeCompare(pathToName[b].crumb);}).forEach(function(pp){
+    if(pp!==p.filepath) sel+='<option value="'+esc(pp)+'">'+esc(pathToName[pp].crumb)+'</option>';
+  });
+  sel+='</select>';
+  showModal('移动产品到其它表','<p style="font-size:13px;margin-bottom:10px;">「'+esc(p.name)+'」</p><div class="form-group"><label>目标产品表</label>'+sel+'</div>',
+    '<button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmMoveProduct('+i+')">移动</button>');
+}
+function confirmMoveProduct(i){
+  var p=filteredProducts[i];var to=document.getElementById('mp-target').value;
+  apiPost('/api/product/move',{fromFile:p.filepath,pos:p.pos,toFile:to}).then(function(){toast('已移动产品','success');closeModal();loadProducts();}).catch(function(e){toast(e.message,'error');});
+}
+
+/* add product via detail? provide simple add on product tab toolbar - use current filter table */
+function openAddProduct(){ toast('请在「分类&表管理」里选表后新增，或用产品移动功能','info'); }
+
+/* =========================================================
+   IMAGE UPLOAD
+   ========================================================= */
+function setupImgUpload(dropId,fileId,inputId,previewId){
+  var drop=document.getElementById(dropId),file=document.getElementById(fileId);
+  if(!drop)return;
+  drop.addEventListener('click',function(){file.click();});
+  file.addEventListener('change',function(){if(file.files[0])uploadImg(file.files[0],inputId,previewId);});
+  drop.addEventListener('dragover',function(e){e.preventDefault();drop.classList.add('drag-over');});
+  drop.addEventListener('dragleave',function(){drop.classList.remove('drag-over');});
+  drop.addEventListener('drop',function(e){e.preventDefault();drop.classList.remove('drag-over');if(e.dataTransfer.files[0])uploadImg(e.dataTransfer.files[0],inputId,previewId);});
+}
+function uploadImg(f,inputId,previewId){
+  var fd=new FormData();fd.append('file',f);fd.append('dir','custom');
+  toast('上传中...','info');
+  fetch('/api/upload-image',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(d){
+    if(d.error){toast(d.error,'error');return;}
+    document.getElementById(inputId).value=d.path;
+    if(previewId)document.getElementById(previewId).src='/'+d.path;
+    toast('图片已上传','success');
+  }).catch(function(e){toast('上传失败: '+e.message,'error');});
+}
+
+/* =========================================================
+   PUBLISH / MAINTENANCE
+   ========================================================= */
+function setPubStatus(msg,type){var el=document.getElementById('pub-status');el.className='pub-status '+type;el.textContent=msg;}
+function doPublish(){
+  var msg=document.getElementById('pub-message').value||'Update from admin panel';
+  var btn=document.getElementById('pub-btn');btn.disabled=true;
+  setPubStatus('正在重建搜索索引并推送到 GitHub...','loading');
+  apiPost('/api/publish',{message:msg}).then(function(d){setPubStatus('✅ '+(d.message||'发布成功'),'success');btn.disabled=false;toast('发布成功','success');}).catch(function(e){setPubStatus('❌ '+e.message,'error');btn.disabled=false;});
+}
+function checkGitStatus(){
+  api('/api/git/status').then(function(d){
+    var el=document.getElementById('gs-list');el.style.display='block';
+    el.textContent=d.clean?'工作区干净，没有待提交的改动。':(d.changes.length+' 个改动文件:\n'+d.changes.join('\n'));
+  }).catch(function(e){toast(e.message,'error');});
+}
+function rebuildSearch(){apiPost('/api/search/rebuild',{}).then(function(d){toast('搜索索引已重建 ('+d.total+' 条)','success');}).catch(function(e){toast(e.message,'error');});}
+function doBackup(){apiPost('/api/backup',{}).then(function(d){toast('已备份: '+d.path,'success');}).catch(function(e){toast(e.message,'error');});}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+loadTree();
+</script>
+</body>
+</html>

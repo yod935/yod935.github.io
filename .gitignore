@@ -32,3 +32,9 @@ Thumbs.db
 # Dev-only files (not for production)
 Product_Catalog.template.html
 CODEBASE.md
+
+# Handover / internal docs (may contain secrets)
+HANDOVER.md
+
+# Local admin backups (timestamped snapshots, local-only)
+data_backup/
