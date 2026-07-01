@@ -245,7 +245,7 @@ function lgSubmit(){
   <div class="content" id="content-products" style="display:none;">
     <div class="table-wrap">
       <div class="table-controls">
-        <input type="text" id="prod-search" placeholder="按产品名搜索..." oninput="filterProducts()">
+        <input type="text" id="prod-search" placeholder="按产品名 或 编号(YOD-000123 / 123)搜索..." oninput="filterProducts()">
         <select id="prod-cat-filter" onchange="filterProducts()"><option value="">全部产品表</option></select>
         <span class="count" id="prod-count"></span>
       </div>
@@ -680,9 +680,17 @@ function buildTableFilter(){
 function filterProducts(){
   var q=(document.getElementById('prod-search').value||'').toLowerCase();
   var cat=document.getElementById('prod-cat-filter').value;
+  var qDigits=q.replace(/\D/g,'');
   filteredProducts=productList.filter(function(p){
     if(cat&&p.filepath!==cat)return false;
-    if(q&&p.name.toLowerCase().indexOf(q)<0)return false;
+    if(q){
+      var byName=p.name.toLowerCase().indexOf(q)>=0;
+      var code=String(p.code||'').toLowerCase();
+      var byCode=code.indexOf(q)>=0;
+      // pure-number query -> match the numeric part of the code / num
+      var byNum=qDigits && (String(p.num).indexOf(qDigits)>=0 || code.replace(/\D/g,'').indexOf(qDigits)>=0);
+      if(!byName&&!byCode&&!byNum)return false;
+    }
     return true;
   });
   renderProducts();
