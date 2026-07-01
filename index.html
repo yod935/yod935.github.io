@@ -516,8 +516,16 @@ img { -webkit-user-drag: none; user-select: none; }
 .cat-card:hover::after { box-shadow: inset 0 0 0 1.5px rgba(29,63,165,0.18); }
 .cat-card-img {
   width: 100%; height: 180px; object-fit: contain; display: block;
-  background: radial-gradient(circle at 50% 38%, #ffffff 0%, #f7f9fe 100%); padding: 18px;
+  background: #ffffff; padding: 18px;
   transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+/* Auto-filled images pulled from the product list are only 110x110px.
+   Rendering them at native size (centered) keeps them crisp instead of
+   upscaling them into the full 180px box, which looked blurry. */
+.cat-card-img.src-native {
+  object-fit: none;
+  object-position: center;
+  image-rendering: -webkit-optimize-contrast;
 }
 .cat-card:hover .cat-card-img { transform: scale(1.05); }
 .cat-card-img.placeholder {
@@ -2330,6 +2338,8 @@ function closeContact(e) {
 }
 
 // ===== ADMIN ACCESS =====
+// Bump this on every release so the internal panel shows what's deployed.
+var SITE_VERSION = 'v2.3';
 var adminUnlocked = false;
 var ADMIN_CURRENT_TAB = 'dashboard';
 var ADMIN_PRODUCT_PAGE = 1;
@@ -2677,6 +2687,12 @@ function renderDashboardTab() {
     }
     h += '</tbody></table>';
   }
+
+  h += '<div style="margin-top:18px;padding-top:12px;border-top:1px solid var(--border-light);'
+     + 'display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted);">'
+     + '<span>Current site version</span>'
+     + '<span style="font-weight:800;color:var(--brand-blue);background:#eef3ff;padding:3px 10px;border-radius:6px;'
+     + 'border:1px solid rgba(29,63,165,0.10);letter-spacing:0.3px;">' + esc(SITE_VERSION) + '</span></div>';
 
   ac.innerHTML = h;
 }
@@ -3850,6 +3866,14 @@ var catRepImageMap = {
   'Zurn Flush Valves': 'images/3448054517/img1.png',
 };
 
+// Manual hand-picked category images live in images/ui/ and are high-resolution.
+// Everything else (AI-picked catRepImageMap + auto getNodeImage/fileFirstImage)
+// comes from the product list and is only 110x110px — upscaling those into the
+// 180px card box looks blurry, so we render them at native size instead.
+function catImgClass(imgSrc) {
+  return (imgSrc && imgSrc.indexOf('images/ui/') === 0) ? 'cat-card-img' : 'cat-card-img src-native';
+}
+
 function getCatIcon(name) {
   if (!name) return '📦';
   // Check catImageMap for an exact match first (highest priority)
@@ -3984,7 +4008,7 @@ function renderHome() {
     var imgSrc = catImageMap[displayName] || catRepImageMap[displayName] || getNodeImage(cat);
     h += '<div class="cat-card" onclick="navigateToNode(' + i + ')">';
     if (imgSrc) {
-      h += '<img class="cat-card-img" src="' + esc(imgSrc) + '" alt="' + escAttr(displayName) + '" loading="lazy">';
+      h += '<img class="' + catImgClass(imgSrc) + '" src="' + esc(imgSrc) + '" alt="' + escAttr(displayName) + '" loading="lazy">';
     } else {
       h += '<div class="cat-card-img placeholder">' + getCatIcon(displayName) + '</div>';
     }
@@ -4048,7 +4072,7 @@ function renderCategory(node, parentPath) {
         : 'navigateToChild(' + i + ')';
       h += '<div class="cat-card" onclick="' + onclick + '">';
       if (childImg) {
-        h += '<img class="cat-card-img" src="' + esc(childImg) + '" alt="' + escAttr(childDisplay) + '" loading="lazy">';
+        h += '<img class="' + catImgClass(childImg) + '" src="' + esc(childImg) + '" alt="' + escAttr(childDisplay) + '" loading="lazy">';
       } else {
         h += '<div class="cat-card-img placeholder">' + getCatIcon(childDisplay) + '</div>';
       }
@@ -4065,7 +4089,7 @@ function renderCategory(node, parentPath) {
       var fImg = catImageMap[f.name] || catRepImageMap[f.name] || fileFirstImage(f.path);
       h += '<div class="cat-card" onclick="openProductFile(' + j + ')">';
       if (fImg) {
-        h += '<img class="cat-card-img" src="' + esc(fImg) + '" alt="' + escAttr(f.name) + '" loading="lazy">';
+        h += '<img class="' + catImgClass(fImg) + '" src="' + esc(fImg) + '" alt="' + escAttr(f.name) + '" loading="lazy">';
       } else {
         h += '<div class="cat-card-img placeholder">' + getCatIcon(f.name) + '</div>';
       }
