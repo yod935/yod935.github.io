@@ -2516,7 +2516,7 @@ function closeContact(e) {
 
 // ===== ADMIN ACCESS =====
 // Bump this on every release so the internal panel shows what's deployed.
-var SITE_VERSION = 'v2.4.2';
+var SITE_VERSION = 'v2.4.3';
 var adminUnlocked = false;
 var ADMIN_CURRENT_TAB = 'dashboard';
 var ADMIN_PRODUCT_PAGE = 1;
@@ -4219,7 +4219,8 @@ function renderHome() {
   h += '</div>';
 
   mc.innerHTML = h;
-  alignCatalogTop();
+  // NOTE: do NOT reposition scroll on the home page — the hero/intro section
+  // must stay visible on first load. goHome() handles any intentional scroll.
 }
 
 // ===== RENDER: CATEGORY PAGE =====
