@@ -2516,7 +2516,7 @@ function closeContact(e) {
 
 // ===== ADMIN ACCESS =====
 // Bump this on every release so the internal panel shows what's deployed.
-var SITE_VERSION = 'v2.4.1';
+var SITE_VERSION = 'v2.4.2';
 var adminUnlocked = false;
 var ADMIN_CURRENT_TAB = 'dashboard';
 var ADMIN_PRODUCT_PAGE = 1;
@@ -4163,6 +4163,24 @@ function navigateBreadcrumb(idx) {
   else if (s.type === 'product') { setHomepageVisible(false); showProduct(s.path, s.name); updateBreadcrumb(); }
 }
 
+// Align the catalog area just below the sticky header/breadcrumb so that when
+// the user switches categories via the sidebar, the sidebar stays put in a
+// consistent screen position instead of the page snapping to the very top.
+function alignCatalogTop() {
+  var layout = document.querySelector('.catalog-layout');
+  if (!layout) { window.scrollTo({top:0}); return; }
+  var header = document.querySelector('.site-header');
+  var bc = document.getElementById('breadcrumb');
+  var offset = (header ? header.offsetHeight : 72)
+             + (bc && bc.style.display !== 'none' ? bc.offsetHeight : 0) + 8;
+  var y = layout.getBoundingClientRect().top + window.pageYOffset - offset;
+  // Only reposition if we're not already at/above that anchor — avoids a jump
+  // when the user is already near the top of the catalog.
+  if (window.pageYOffset > y + 4 || window.pageYOffset < y - 4) {
+    window.scrollTo({top: Math.max(0, y), behavior: 'auto'});
+  }
+}
+
 // ===== RENDER: HOME PAGE =====
 function renderHome() {
   var mc = document.getElementById('mainContent');
@@ -4201,7 +4219,7 @@ function renderHome() {
   h += '</div>';
 
   mc.innerHTML = h;
-  window.scrollTo({top:0, behavior:'smooth'});
+  alignCatalogTop();
 }
 
 // ===== RENDER: CATEGORY PAGE =====
@@ -4283,7 +4301,7 @@ function renderCategory(node, parentPath) {
 
   window._navCtx = {node: node, path: parentPath};
   mc.innerHTML = h;
-  window.scrollTo({top:0, behavior:'smooth'});
+  alignCatalogTop();
 }
 
 // First product image for a single leaf table (for its card thumbnail)
@@ -4644,7 +4662,7 @@ function renderProductTable(mc, dispName, relPath, headers, dataRows, imgMap, fi
   h += '</div>';
 
   mc.innerHTML = h;
-  window.scrollTo({top:0, behavior:'smooth'});
+  alignCatalogTop();
 }
 
 function showSourceTrace(e) {
