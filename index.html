@@ -484,6 +484,112 @@ img { -webkit-user-drag: none; user-select: none; }
 .catalog-subtitle {
   font-size: 16px; color: var(--text-muted); line-height: 1.6; max-width: 520px; margin: 0 auto;
 }
+
+/* ===== CATALOG LAYOUT (sidebar + main) ===== */
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 268px minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+.catalog-layout > main { min-width: 0; }
+
+/* ===== CATEGORY SIDEBAR ===== */
+.cat-sidebar {
+  position: sticky; top: 88px;
+  align-self: start;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 108px);
+}
+.cat-sidebar-head {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.cat-sidebar-title {
+  font-size: 15px; font-weight: 900; color: var(--brand-blue);
+  letter-spacing: -0.2px; display: flex; align-items: center; gap: 9px;
+}
+.cat-sidebar-title svg { flex-shrink: 0; }
+.cat-sidebar-sub {
+  font-size: 11.5px; color: var(--text-light); margin-top: 4px; font-weight: 600;
+}
+.cat-tree {
+  overflow-y: auto; overflow-x: hidden;
+  padding: 8px 8px 12px;
+  flex: 1;
+  scrollbar-width: thin;
+}
+.cat-tree::-webkit-scrollbar { width: 8px; }
+.cat-tree::-webkit-scrollbar-thumb { background: #d5ddec; border-radius: 8px; border: 2px solid var(--bg-card); }
+.cat-node { }
+.cat-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; user-select: none;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+.cat-row:hover { background: #f0f4ff; }
+.cat-row.active {
+  background: #eaf0ff; color: var(--brand-blue);
+}
+.cat-row.active > .cat-label { color: var(--brand-blue); font-weight: 800; }
+.cat-row.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--brand-blue);
+}
+.cat-caret {
+  flex-shrink: 0; width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-light); transition: transform 0.2s, color 0.15s;
+  border-radius: 4px;
+}
+.cat-caret svg { width: 11px; height: 11px; }
+.cat-node.open > .cat-row > .cat-caret { transform: rotate(90deg); color: var(--brand-blue); }
+.cat-row:hover .cat-caret { color: var(--brand-blue); }
+.cat-caret.leaf { visibility: hidden; }
+.cat-label {
+  flex: 1; font-size: 13px; font-weight: 600; color: var(--text-body);
+  line-height: 1.35; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+.cat-count {
+  flex-shrink: 0; font-size: 10.5px; font-weight: 700; color: var(--text-light);
+  background: #f1f4fb; padding: 1px 7px; border-radius: 20px; min-width: 20px; text-align: center;
+}
+.cat-row.active .cat-count { background: #dae4ff; color: var(--brand-blue); }
+.cat-children {
+  display: none;
+  margin-left: 15px;
+  padding-left: 9px;
+  border-left: 1px solid var(--border-light);
+}
+.cat-node.open > .cat-children { display: block; }
+
+/* Mobile drawer trigger + overlay */
+.cat-sidebar-toggle {
+  display: none;
+  align-items: center; gap: 8px;
+  margin: 0 0 20px; padding: 12px 18px;
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+  font-size: 14px; font-weight: 800; color: var(--brand-blue); cursor: pointer;
+  width: 100%;
+}
+.cat-sidebar-toggle svg { flex-shrink: 0; }
+.cat-sidebar-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 90;
+  background: rgba(12,20,69,0.35); backdrop-filter: blur(2px);
+}
+.cat-sidebar-backdrop.show { display: block; }
+
 .cards-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 22px;
@@ -1739,8 +1845,22 @@ body, .product-table, .cat-card, .breadcrumb-wrap, .hero-section,
 @media (max-width: 1024px) {
   .features-grid { grid-template-columns: repeat(2, 1fr); }
   .cards-grid { grid-template-columns: repeat(3, 1fr); }
+  .catalog-layout { grid-template-columns: 232px minmax(0, 1fr); gap: 24px; }
+}
+/* Below 900px: sidebar becomes an off-canvas drawer */
+@media (max-width: 900px) {
+  .catalog-layout { display: block; }
+  .cat-sidebar-toggle { display: flex; }
+  .cat-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 95;
+    width: 300px; max-width: 84vw; max-height: none; border-radius: 0;
+    transform: translateX(-100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 40px rgba(0,0,0,0.18);
+  }
+  .cat-sidebar.open { transform: translateX(0); }
 }
 @media (max-width: 768px) {
+  .cat-sidebar { top: 60px; }
   .header-inner { padding: 0 16px; height: 60px; gap: 12px; }
   .header-left { gap: 8px; }
   .company-tagline { display: none; }
@@ -1896,11 +2016,28 @@ body, .product-table, .cat-card, .breadcrumb-wrap, .hero-section,
       <h2 class="catalog-title">Product Catalog</h2>
       <p class="catalog-subtitle">Click any category to explore our full range of products.</p>
     </div>
-    <main id="mainContent">
-      <div class="loading-state"><div class="spinner"></div><div>Loading catalog...</div></div>
-    </main>
+    <button class="cat-sidebar-toggle" id="catSidebarToggle" onclick="toggleCatSidebar()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Browse Categories
+    </button>
+    <div class="catalog-layout">
+      <aside class="cat-sidebar" id="catSidebar">
+        <div class="cat-sidebar-head">
+          <div class="cat-sidebar-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/></svg>
+            Product Categories
+          </div>
+          <div class="cat-sidebar-sub" id="catSidebarSub"></div>
+        </div>
+        <nav class="cat-tree" id="catTree"></nav>
+      </aside>
+      <main id="mainContent">
+        <div class="loading-state"><div class="spinner"></div><div>Loading catalog...</div></div>
+      </main>
+    </div>
   </div>
 </section>
+<div class="cat-sidebar-backdrop" id="catSidebarBackdrop" onclick="closeCatSidebar()"></div>
 
 <!-- ===== FEATURES / ADVANTAGES (shown only on homepage) ===== -->
 <section class="features-section" id="featuresSection">
@@ -2339,7 +2476,7 @@ function closeContact(e) {
 
 // ===== ADMIN ACCESS =====
 // Bump this on every release so the internal panel shows what's deployed.
-var SITE_VERSION = 'v2.3';
+var SITE_VERSION = 'v2.4';
 var adminUnlocked = false;
 var ADMIN_CURRENT_TAB = 'dashboard';
 var ADMIN_PRODUCT_PAGE = 1;
@@ -3975,6 +4112,7 @@ function updateBreadcrumb() {
   h += '<button class="btn-back ' + (navStack.length <= 1 ? 'hidden' : '') + '" id="btnBack" onclick="goBack()">&#8592; Back</button>';
   bc.innerHTML = h;
   pushNavHistory();
+  syncSidebar(currentNavNode());
 }
 
 function navigateBreadcrumb(idx) {
@@ -4038,7 +4176,7 @@ function renderCategory(node, parentPath) {
     // navStack entry was already pushed by navigateTo — update the existing
     // category entry to product type so breadcrumb doesn't duplicate the name.
     if (navStack.length > 0 && navStack[navStack.length-1].type === 'category') {
-      navStack[navStack.length-1] = {type:'product', path:node._files[0].path, name:node._files[0].name};
+      navStack[navStack.length-1] = {type:'product', path:node._files[0].path, name:node._files[0].name, node:node};
     }
     setHomepageVisible(false);
     showProduct(node._files[0].path, node._files[0].name, node._files[0].no);
@@ -4158,6 +4296,178 @@ function openProductFile(idx) {
   var ctx = window._navCtx;
   if (!ctx) return;
   openProduct(ctx.node._files[idx]);
+}
+
+/* =========================================================
+   CATEGORY SIDEBAR  (mirrors the real TREE_DATA structure)
+   ========================================================= */
+var NAV_BY_ID = {};
+var _navIdSeq = 0;
+
+// One-time walk: give every tree node a stable id + parent link so the sidebar
+// can navigate to / highlight / expand any node regardless of how it was reached.
+function initCatNav() {
+  NAV_BY_ID = {};
+  _navIdSeq = 0;
+  (function walk(nodes, parent) {
+    if (!nodes) return;
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      n._navId = ++_navIdSeq;
+      n._navParent = parent || null;
+      NAV_BY_ID[n._navId] = n;
+      if (n._children && n._children.length) walk(n._children, n);
+    }
+  })(TREE_DATA, null);
+}
+
+function catNodeHasKids(node) {
+  return !!(node._children && node._children.length > 0);
+}
+
+// Build the HTML for a single sidebar row (children container filled lazily).
+function catRowHtml(node) {
+  var disp = node._displayName || stripNum(node.name);
+  var hasKids = catNodeHasKids(node);
+  var count = node.total || 0;
+  var h = '<div class="cat-node" data-nav-id="' + node._navId + '">';
+  h += '<div class="cat-row" data-nav-id="' + node._navId + '">';
+  h += '<span class="cat-caret' + (hasKids ? '' : ' leaf') + '">'
+     + (hasKids ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>' : '')
+     + '</span>';
+  h += '<span class="cat-label" title="' + escAttr(disp) + '">' + esc(disp) + '</span>';
+  if (count > 0) h += '<span class="cat-count num">' + (count >= 1000 ? (Math.round(count/100)/10) + 'k' : count) + '</span>';
+  h += '</div>';
+  h += '<div class="cat-children"></div>';
+  h += '</div>';
+  return h;
+}
+
+// Render top-level rows once; deeper levels are rendered on demand.
+function renderCatTree() {
+  var tree = document.getElementById('catTree');
+  if (!tree || !TREE_DATA) return;
+  var h = '';
+  for (var i = 0; i < TREE_DATA.length; i++) h += catRowHtml(TREE_DATA[i]);
+  tree.innerHTML = h;
+  var sub = document.getElementById('catSidebarSub');
+  if (sub) sub.textContent = TREE_DATA.length + ' main categories';
+}
+
+// Lazily populate a node's children container the first time it opens.
+function ensureCatChildren(nodeEl) {
+  var box = nodeEl.querySelector(':scope > .cat-children');
+  if (!box || box.getAttribute('data-built') === '1') return;
+  var node = NAV_BY_ID[nodeEl.getAttribute('data-nav-id')];
+  if (!node || !catNodeHasKids(node)) { box.setAttribute('data-built', '1'); return; }
+  var h = '';
+  for (var i = 0; i < node._children.length; i++) h += catRowHtml(node._children[i]);
+  box.innerHTML = h;
+  box.setAttribute('data-built', '1');
+}
+
+function toggleCatNode(nodeEl) {
+  var open = nodeEl.classList.contains('open');
+  if (!open) { ensureCatChildren(nodeEl); nodeEl.classList.add('open'); }
+  else { nodeEl.classList.remove('open'); }
+}
+
+// Navigate the whole app to a given tree node (also used by the sidebar).
+function navigateToNavId(navId) {
+  var node = NAV_BY_ID[navId];
+  if (!node) return;
+  var chain = [];
+  for (var n = node; n; n = n._navParent) chain.unshift(n);
+  navStack = [{ type: 'home' }];
+  var pathAcc = '';
+  for (var i = 0; i < chain.length; i++) {
+    pathAcc = pathAcc ? pathAcc + '/' + chain[i].name : chain[i].name;
+    navStack.push({ type: 'category', node: chain[i], path: pathAcc, name: chain[i]._displayName || stripNum(chain[i].name) });
+  }
+  setHomepageVisible(false);
+  renderCategory(node, pathAcc);
+  updateBreadcrumb();
+  closeCatSidebar();
+}
+
+// Highlight the active node in the sidebar & expand its ancestors.
+function syncSidebar(node) {
+  var tree = document.getElementById('catTree');
+  if (!tree) return;
+  var prev = tree.querySelector('.cat-row.active');
+  if (prev) prev.classList.remove('active');
+  if (!node) return;
+  // Expand ancestor chain top-down so child containers exist before we drill in.
+  var chain = [];
+  for (var n = node; n; n = n._navParent) chain.unshift(n);
+  for (var i = 0; i < chain.length - 1; i++) {
+    var anc = tree.querySelector('.cat-node[data-nav-id="' + chain[i]._navId + '"]');
+    if (anc) { ensureCatChildren(anc); anc.classList.add('open'); }
+  }
+  var rowNode = tree.querySelector('.cat-node[data-nav-id="' + node._navId + '"]');
+  if (rowNode) {
+    var row = rowNode.querySelector(':scope > .cat-row');
+    if (row) {
+      row.classList.add('active');
+      // Keep the active row comfortably in view within the scrollable tree.
+      var trect = tree.getBoundingClientRect();
+      var rrect = row.getBoundingClientRect();
+      if (rrect.top < trect.top || rrect.bottom > trect.bottom) {
+        tree.scrollTop += (rrect.top - trect.top) - trect.height / 2 + rrect.height;
+      }
+    }
+  }
+}
+
+// Find the deepest navStack entry that carries a real tree node (for highlight).
+function currentNavNode() {
+  for (var i = navStack.length - 1; i >= 0; i--) {
+    if (navStack[i] && navStack[i].node) return navStack[i].node;
+  }
+  return null;
+}
+
+// Sidebar click delegation
+document.addEventListener('DOMContentLoaded', function(){
+  var tree = document.getElementById('catTree');
+  if (!tree) return;
+  tree.addEventListener('click', function(e){
+    var caret = e.target.closest('.cat-caret');
+    var row = e.target.closest('.cat-row');
+    if (!row) return;
+    var nodeEl = row.parentElement;
+    var node = NAV_BY_ID[row.getAttribute('data-nav-id')];
+    if (caret && !caret.classList.contains('leaf')) {
+      // Caret: expand/collapse only
+      e.stopPropagation();
+      toggleCatNode(nodeEl);
+      return;
+    }
+    // Row body: navigate (and open the branch if it has children)
+    if (node) {
+      if (catNodeHasKids(node) && !nodeEl.classList.contains('open')) {
+        ensureCatChildren(nodeEl); nodeEl.classList.add('open');
+      }
+      navigateToNavId(node._navId);
+    }
+  });
+});
+
+function toggleCatSidebar() {
+  var sb = document.getElementById('catSidebar');
+  var bd = document.getElementById('catSidebarBackdrop');
+  if (!sb) return;
+  var open = sb.classList.toggle('open');
+  if (bd) bd.classList.toggle('show', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeCatSidebar() {
+  var sb = document.getElementById('catSidebar');
+  var bd = document.getElementById('catSidebarBackdrop');
+  // Only affects the mobile drawer state; harmless on desktop.
+  if (sb) sb.classList.remove('open');
+  if (bd) bd.classList.remove('show');
+  if (window.innerWidth <= 900) document.body.style.overflow = '';
 }
 
 // ===== RENDER: PRODUCT TABLE =====
@@ -4929,6 +5239,8 @@ function buildDisplayCategories() {
 function initApp() {
   if (!TREE_DATA || !SEARCH_DATA) { console.error('Data not loaded'); return; }
   buildSearchIndex();
+  initCatNav();
+  renderCatTree();
   goHome(true);
   // Global ESC handler for seller modal & mini password
   document.addEventListener('keydown', function(ev){

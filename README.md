@@ -2,7 +2,7 @@
 
 > One-Stop Supplier For HVAC & Plumbing Service Contractors
 
-**当前版本：v2.3**
+**当前版本：v2.4**
 
 ---
 
@@ -20,6 +20,7 @@
 
 ## 版本记录
 
+- v2.4
 - v2.3
 - v2.2
 - v2.1
